@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zenith - Minimal Habit Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #ffffff;
+        color: #1a1a1a;
+        overflow-x: hidden;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .low-stim {
+        filter: grayscale(1);
+      }
+
+      /* Premium Splash Animations */
+      @keyframes zenith-emerge {
+        0% {
+          opacity: 0;
+          filter: blur(20px);
+          letter-spacing: 2em;
+          transform: scale(1.1);
+        }
+        100% {
+          opacity: 1;
+          filter: blur(0);
+          letter-spacing: 0.5em;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes line-draw {
+        0% { transform: scaleX(0); opacity: 0; }
+        100% { transform: scaleX(1); opacity: 1; }
+      }
+
+      @keyframes subtitle-float {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+          filter: blur(5px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+          filter: blur(0);
+        }
+      }
+
+      @keyframes container-exit {
+        0% { opacity: 1; transform: scale(1); filter: blur(0); }
+        100% { opacity: 0; transform: scale(1.05); filter: blur(15px); visibility: hidden; }
+      }
+
+      @keyframes grain {
+        0%, 100% { transform: translate(0, 0); }
+        10% { transform: translate(-5%, -5%); }
+        30% { transform: translate(5%, -10%); }
+        50% { transform: translate(-10%, 5%); }
+        70% { transform: translate(10%, 10%); }
+        90% { transform: translate(-5%, 0%); }
+      }
+
+      .animate-zenith-emerge {
+        animation: zenith-emerge 3.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      .animate-subtitle-float {
+        animation: subtitle-float 1.5s cubic-bezier(0.16, 1, 0.3, 1) 1.5s forwards;
+      }
+
+      .animate-line-draw {
+        animation: line-draw 2s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+      }
+
+      /* Exit starts at 3s, creating a seamless cross-fade with the app content */
+      .animate-splash-exit {
+        animation: container-exit 1s cubic-bezier(0.16, 1, 0.3, 1) 3s forwards;
+      }
+
+      .grain-overlay {
+        position: fixed;
+        width: 400%;
+        height: 400%;
+        top: -150%;
+        left: -150%;
+        background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_filmgrain.png');
+        background-repeat: repeat;
+        opacity: 0.05;
+        pointer-events: none;
+        z-index: 200;
+        animation: grain 12s steps(10) infinite;
+      }
+
+      /* Checkbox Premium Styling */
+      .checkbox-container {
+        display: inline-block;
+        user-select: none;
+      }
+      .task-checkbox {
+        display: none;
+      }
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 16px;
+        color: #111827;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        padding: 6px 0;
+        border-radius: 8px;
+      }
+      .checkbox-box {
+        position: relative;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        margin-right: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .checkbox-box::after {
+        content: "";
+        width: 10px;
+        height: 10px;
+        background: #000;
+        border-radius: 2px;
+        transform: scale(0);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      .task-checkbox:checked + .checkbox-label .checkbox-box {
+        border-color: #000;
+      }
+      .task-checkbox:checked + .checkbox-label .checkbox-box::after {
+        transform: scale(1);
+      }
+      .task-checkbox:checked + .checkbox-label .checkbox-text {
+        color: #9ca3af;
+        text-decoration: line-through;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.0.0/",
+    "react/": "https://esm.sh/react@^19.0.0/",
+    "react": "https://esm.sh/react@^19.0.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.460.0",
+    "vite": "https://esm.sh/vite@^6.0.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^4.3.4",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.47.10"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
