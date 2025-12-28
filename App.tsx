@@ -8,9 +8,8 @@ import {
   FileText, Copy, Check, ChevronRight, UserCircle,
   Bell, BellOff, Activity, Eye, EyeOff, Sparkles, Eye as EyeIcon,
   ShieldCheck, AlertCircle, Database, RefreshCw, Terminal,
-  HardDrive, Key, Lock
+  HardDrive, Key, Lock, Zap, Shield, Globe, Layers, Feather
 } from 'lucide-react';
-import Lenis from 'lenis';
 import { supabase } from './supabase';
 import { Pomodoro } from './components/Pomodoro';
 import { Clock } from './components/Clock';
@@ -33,7 +32,7 @@ interface PriorityItem {
   text: string;
   completed: boolean;
   category: PriorityCategory;
-  subCategory: PrioritySubCategory;
+  sub_category: PrioritySubCategory; // Updated to match Supabase snake_case
 }
 
 type Section = 'clarity' | 'priorities' | 'planner' | 'notes' | 'feedback' | 'about';
@@ -197,19 +196,22 @@ const AuthPage: React.FC<{ onAuthSuccess: () => void }> = ({ onAuthSuccess }) =>
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        setError("Account established. Welcome to Zenith.");
+        setSuccess("Account established. Welcome.");
         onAuthSuccess();
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -223,83 +225,129 @@ const AuthPage: React.FC<{ onAuthSuccess: () => void }> = ({ onAuthSuccess }) =>
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Please enter your email to reset the portal key.");
+      return;
+    }
+    setResetLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      setSuccess("Reset relay dispatched to your identity ID.");
+    } catch (err: any) {
+      setError(err.message || "Reset request failed.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[600] bg-[#fbfbfb] flex items-center justify-center p-8 animate-in fade-in duration-500 overflow-y-auto">
-      <div className="w-full max-sm:max-w-xs max-w-sm space-y-10 relative my-auto">
-        <div className="text-center space-y-4">
-          <div className="inline-block p-6 bg-black rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-700">
-            <Brain size={48} className="text-white" />
-          </div>
-          <h2 className="text-5xl font-black text-neutral-900 tracking-tighter uppercase">Zenith</h2>
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-400">Cloud-Powered Focus</p>
-        </div>
-
-        <div className="flex p-1.5 bg-neutral-200/50 rounded-2xl shadow-inner">
-          {(['signin', 'signup'] as const).map(m => (
-            <button 
-              key={m} 
-              onClick={() => { setMode(m); setError(''); }} 
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${mode === m ? 'bg-white text-neutral-900 shadow-md transform scale-[1.02]' : 'text-neutral-500 hover:text-neutral-700'}`}
-            >
-              {m === 'signin' ? 'Sign In' : 'Sign Up'}
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={handleAuth} className="space-y-5">
-          <div className="space-y-1">
-            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 ml-1">Identity ID</label>
-            <input 
-              type="email" 
-              required 
-              placeholder="email@example.com" 
-              className="w-full bg-white border border-neutral-200 py-5 px-6 text-neutral-900 font-bold rounded-2xl focus:border-black focus:ring-1 focus:ring-black outline-none transition-all shadow-sm placeholder:text-neutral-300" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 ml-1">Portal Key</label>
-            <div className="relative">
-              <input 
-                type={showPassword ? "text" : "password"} 
-                required 
-                placeholder="••••••••" 
-                className="w-full bg-white border border-neutral-200 py-5 px-6 text-neutral-900 font-bold rounded-2xl focus:border-black focus:ring-1 focus:ring-black outline-none transition-all shadow-sm placeholder:text-neutral-300 pr-14" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-              />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-neutral-300 hover:text-black transition-colors p-1"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+    <div className="fixed inset-0 z-[600] bg-[#f5f5f5] flex items-center justify-center p-6 animate-in fade-in duration-500 overflow-y-auto">
+      <div className="w-full flex items-center justify-center">
+        <div className="w-full max-w-sm bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-neutral-100 p-8 sm:p-10 space-y-8 relative">
+          <div className="text-center space-y-4">
+            <div className="inline-block p-4 bg-black rounded-2xl shadow-xl animate-in zoom-in duration-700">
+              <Brain size={32} className="text-white" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-3xl font-black text-neutral-900 tracking-tighter uppercase">Zenith</h2>
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-neutral-300">Sanctuary Portal</p>
             </div>
           </div>
-          <button 
-            type="submit" 
-            disabled={loading} 
-            className="w-full py-5 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-neutral-800"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (mode === 'signin' ? 'Unlock Portal' : 'Establish Identity')}
-          </button>
-        </form>
 
-        {error && (
-          <div className="p-6 bg-red-50 border border-red-100 rounded-2xl animate-in slide-in-from-top-4">
-             <div className="flex gap-3 text-red-700">
-               <AlertCircle className="shrink-0" size={20} />
-               <p className="text-xs font-bold leading-relaxed">{error}</p>
-             </div>
+          <div className="flex p-1 bg-neutral-100 rounded-2xl shadow-inner">
+            {(['signin', 'signup'] as const).map(m => (
+              <button 
+                key={m} 
+                onClick={() => { setMode(m); setError(''); setSuccess(''); }} 
+                className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${mode === m ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-400 hover:text-neutral-600'}`}
+              >
+                {m === 'signin' ? 'Unlock' : 'Join'}
+              </button>
+            ))}
           </div>
-        )}
 
-        <div className="text-center pt-4">
-          <p className="text-[9px] font-black uppercase tracking-widest text-neutral-300 flex items-center justify-center gap-2">
-            <ShieldCheck size={12}/> Secure Supabase Backend
-          </p>
+          <form onSubmit={handleAuth} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-[9px] font-black uppercase tracking-widest text-neutral-400 ml-1">Identity</label>
+              <input 
+                type="email" 
+                required 
+                placeholder="email@example.com" 
+                className="w-full bg-neutral-50 border border-neutral-100 py-4 px-6 text-neutral-900 font-bold rounded-2xl focus:border-black focus:ring-0 outline-none transition-all placeholder:text-neutral-300" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-black uppercase tracking-widest text-neutral-400 ml-1">Key</label>
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  required 
+                  placeholder="••••••••" 
+                  className="w-full bg-neutral-50 border border-neutral-100 py-4 px-6 text-neutral-900 font-bold rounded-2xl focus:border-black focus:ring-0 outline-none transition-all placeholder:text-neutral-300 pr-12" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-300 hover:text-black transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {mode === 'signin' && (
+                <div className="flex justify-end pt-1">
+                  <button 
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={resetLoading}
+                    className="text-[8px] font-black uppercase tracking-[0.2em] text-neutral-400 hover:text-black transition-colors disabled:opacity-50"
+                  >
+                    {resetLoading ? 'Resetting...' : 'Forgot Key?'}
+                  </button>
+                </div>
+              )}
+            </div>
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full py-4 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-neutral-800"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (mode === 'signin' ? 'Enter Sanctuary' : 'Establish Presence')}
+            </button>
+          </form>
+
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl animate-in slide-in-from-top-2">
+               <div className="flex gap-3 text-red-700">
+                 <AlertCircle className="shrink-0" size={16} />
+                 <p className="text-[10px] font-bold leading-relaxed">{error}</p>
+               </div>
+            </div>
+          )}
+
+          {success && (
+            <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl animate-in slide-in-from-top-2">
+               <div className="flex gap-3 text-emerald-700">
+                 <CheckCircle className="shrink-0" size={16} />
+                 <p className="text-[10px] font-bold leading-relaxed">{success}</p>
+               </div>
+            </div>
+          )}
+
+          <div className="text-center">
+            <p className="text-[8px] font-black uppercase tracking-widest text-neutral-300 flex items-center justify-center gap-2">
+              <ShieldCheck size={10}/> Cloud Synchronized
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -346,7 +394,7 @@ const OnboardingFlow: React.FC<{ onComplete: (profile: UserProfile) => void }> =
   if (step === 1) {
     return (
       <div className="fixed inset-0 z-[500] bg-white flex flex-col items-center justify-center p-8 overflow-y-auto animate-in fade-in duration-700">
-        <div className="max-w-md w-full space-y-12">
+        <div className="max-w-md w-full space-y-12 text-center sm:text-left">
           <div className="space-y-6">
             <p className="text-xs font-black uppercase tracking-[0.4em] text-neutral-400">Identity Established</p>
             <h1 className="text-5xl font-black tracking-tighter text-neutral-900 leading-none">Welcome.</h1>
@@ -409,7 +457,6 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   const mainScrollRef = useRef<HTMLElement>(null);
-  const lenisRef = useRef<Lenis | null>(null);
 
   const [activeSection, setActiveSection] = useState<Section>('clarity');
   const [lowStimMode, setLowStimMode] = useState(false);
@@ -421,7 +468,6 @@ const App: React.FC = () => {
   const [notes, setNotes] = useState<any[]>([]);
 
   const [showSettings, setShowSettings] = useState(false);
-  const [notificationStatus, setNotificationStatus] = useState<NotificationPermission>(Notification.permission);
   
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskReminder, setNewTaskReminder] = useState(false);
@@ -452,10 +498,13 @@ const App: React.FC = () => {
         fetchProfile(session.user.id);
         fetchUserData(session.user.id);
       } else {
+        // Clear all data on logout and redirect to auth page
         setUserProfile(null);
         setTasks([]);
         setPriorities([]);
         setNotes([]);
+        setActiveSection('clarity');
+        setShowSettings(false);
       }
     });
 
@@ -486,10 +535,9 @@ const App: React.FC = () => {
     if (n.data) setNotes(n.data);
   };
 
-  // Sync helpers
   const handleAddTask = async () => {
     if (!newTaskTitle.trim() || !session) return;
-    const { data, error } = await supabase.from('tasks').insert({
+    const { data } = await supabase.from('tasks').insert({
       user_id: session.user.id,
       title: newTaskTitle,
       remind: newTaskReminder
@@ -556,25 +604,13 @@ const App: React.FC = () => {
     await supabase.from('notes').delete().eq('id', id);
   };
 
-  // Lenis Implementation
   useEffect(() => {
-    if (isAuthenticated && userProfile?.completedOnboarding && mainScrollRef.current) {
-      const lenis = new Lenis({
-        wrapper: mainScrollRef.current,
-        lerp: 0.1,
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
       });
-      lenisRef.current = lenis;
-      function raf(time: number) { lenis.raf(time); requestAnimationFrame(raf); }
-      requestAnimationFrame(raf);
-      return () => { lenis.destroy(); lenisRef.current = null; };
     }
-  }, [isAuthenticated, userProfile?.completedOnboarding]);
-
-  useEffect(() => {
-    if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true });
-    else if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
   }, [activeSection]);
 
   const SidebarContent = () => (
@@ -604,6 +640,11 @@ const App: React.FC = () => {
   );
 
   const navigate = (id: Section) => { setActiveSection(id); setIsSidebarOpen(false); };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    // Redirect logic is handled by onAuthStateChange hook automatically
+  };
 
   return (
     <>
@@ -652,7 +693,7 @@ const App: React.FC = () => {
                           <span className="text-xs font-black uppercase tracking-widest">Low-Stim Mode</span>
                           <button onClick={() => setLowStimMode(!lowStimMode)} className={`w-12 h-7 rounded-full relative transition-all ${lowStimMode ? 'bg-black' : 'bg-neutral-200'}`}><div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${lowStimMode ? 'left-6' : 'left-1'}`} /></button>
                         </div>
-                        <button onClick={async () => { await supabase.auth.signOut(); window.location.reload(); }} className="w-full flex items-center gap-4 p-5 bg-neutral-50 rounded-2xl border border-neutral-100 text-neutral-600 hover:bg-neutral-100 transition-colors"><LogOut size={20} /><span className="text-xs font-black uppercase tracking-widest">Exit Portal</span></button>
+                        <button onClick={handleLogout} className="w-full flex items-center gap-4 p-5 bg-neutral-50 rounded-2xl border border-neutral-100 text-neutral-600 hover:bg-neutral-100 transition-colors"><LogOut size={20} /><span className="text-xs font-black uppercase tracking-widest">Exit Portal</span></button>
                       </div>
                     </div>
                     <button onClick={() => setShowSettings(false)} className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] mt-8 hover:bg-neutral-800 transition-colors shadow-xl">Resume Focus</button>
@@ -660,7 +701,10 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              <main ref={mainScrollRef} className="flex-1 overflow-y-auto px-6 lg:px-12 py-8 lg:py-16 w-full scrolling-touch no-scrollbar lg:scrollbar-default">
+              <main 
+                ref={mainScrollRef} 
+                className="flex-1 overflow-y-auto px-6 lg:px-12 py-8 lg:py-16 w-full scrolling-touch scroll-container no-scrollbar lg:scrollbar-default"
+              >
                 <div className="max-w-7xl mx-auto pb-32 lg:pb-16">
                   {activeSection === 'clarity' && (
                     <div className="space-y-8 lg:space-y-12 animate-in slide-in-from-bottom-4 duration-700">
@@ -668,7 +712,11 @@ const App: React.FC = () => {
                         <h1 className="text-4xl lg:text-6xl font-black tracking-tighter text-neutral-900 leading-tight">Hi, {userProfile?.name.split(' ')[0] || 'Zenith User'}.</h1>
                         <p className="text-xs lg:text-lg font-medium text-neutral-400 italic">Welcome back to your sanctuary.</p>
                       </div>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10"><Pomodoro /><Clock /></div>
+                      {/* Dashboard Layout: Stacked on mobile, Shoulder-to-Shoulder on desktop */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+                        <Pomodoro />
+                        <Clock />
+                      </div>
                     </div>
                   )}
 
@@ -741,7 +789,13 @@ const App: React.FC = () => {
 
                   {activeSection === 'feedback' && (
                     <div className="space-y-8 lg:space-y-12 pt-4 animate-in max-w-xl">
-                      <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Voice.</h1>
+                      <div className="space-y-2">
+                        <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Voice.</h1>
+                        <p className="text-sm font-medium text-neutral-500 leading-relaxed italic">
+                          Contribute your insights or proposed shifts to refine Zenith’s environment for your daily pursuit of depth. <br/>
+                          <span className="text-black font-black uppercase tracking-widest mt-1 inline-block bg-neutral-100 px-2 py-0.5 rounded text-[10px] not-italic">We hear you.</span>
+                        </p>
+                      </div>
                       <div className="bg-white p-10 rounded-[2.5rem] border border-neutral-100 shadow-sm space-y-8">
                         {feedbackSent ? (
                           <div className="text-center py-12 space-y-6"><div className="w-20 h-20 bg-emerald-50 rounded-full mx-auto flex items-center justify-center text-emerald-500"><CheckCircle size={40} /></div><h3 className="text-2xl font-black">Received.</h3><p className="text-neutral-400 text-sm">Your feedback helps refine the sanctuary.</p></div>
@@ -763,9 +817,105 @@ const App: React.FC = () => {
                   )}
 
                   {activeSection === 'about' && (
-                    <div className="space-y-16 lg:space-y-24 pt-12 text-center max-w-2xl mx-auto">
-                      <h1 className="text-7xl lg:text-9xl font-black tracking-tighter leading-[0.85] text-neutral-900">Less,<br/>but better.</h1>
-                      <div className="p-10 lg:p-16 bg-black rounded-[3rem] text-white shadow-2xl scale-[1.05]"><p className="text-xl lg:text-3xl font-medium italic opacity-90 leading-relaxed">"Simplicity is the presence of meaning."</p></div>
+                    <div className="space-y-16 lg:space-y-32 pt-12 animate-in fade-in duration-1000 max-w-5xl mx-auto">
+                      {/* Hero Manifesto */}
+                      <div className="text-center space-y-8 relative">
+                        <div className="absolute inset-0 -z-10 flex items-center justify-center">
+                          <Brain size={400} className="text-neutral-50 opacity-[0.4] stroke-[0.5]" />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.8em] text-neutral-300">Established MMXXIV</p>
+                        <h1 className="text-6xl lg:text-[7rem] font-black tracking-tighter leading-[0.85] text-neutral-900 uppercase">
+                          Minimalist<br/>Sanctuary.
+                        </h1>
+                        <p className="text-lg lg:text-2xl text-neutral-500 font-medium max-w-2xl mx-auto leading-relaxed">
+                          Zenith is built on the belief that depth is a competitive advantage. In an age of infinite distraction, the ability to focus is a superpower.
+                        </p>
+                      </div>
+
+                      {/* Core Pillars */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="p-10 bg-white border border-neutral-100 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-500 group">
+                          <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white mb-8 group-hover:scale-110 transition-transform shadow-lg shadow-black/10">
+                            <Feather size={28} />
+                          </div>
+                          <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">Dopamine Balance</h3>
+                          <p className="text-neutral-500 font-medium leading-relaxed">
+                            Low-stimulation UI reduces cognitive load. By removing vibrant distractions and infinite scrolls, we help you stay in the flow state longer.
+                          </p>
+                        </div>
+
+                        <div className="p-10 bg-white border border-neutral-100 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-500 group">
+                          <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center text-black mb-8 group-hover:scale-110 transition-transform">
+                            <Zap size={28} />
+                          </div>
+                          <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">Atomic Progress</h3>
+                          <p className="text-neutral-500 font-medium leading-relaxed">
+                            We don't track volume; we track value. Zenith focuses on Must-Do priorities, ensuring your daily momentum aligns with your life goals.
+                          </p>
+                        </div>
+
+                        <div className="p-10 bg-white border border-neutral-100 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-500 group">
+                          <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-8 group-hover:scale-110 transition-transform">
+                            <ShieldCheck size={28} />
+                          </div>
+                          <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">Cloud Sovereignty</h3>
+                          <p className="text-neutral-500 font-medium leading-relaxed">
+                            Your data belongs to you. Secured by Supabase and encrypted in the cloud, your sanctuary is available whenever and wherever you need it.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Detailed Story Section */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
+                        <div className="space-y-8">
+                          <div className="space-y-4">
+                            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-400">The Technology of Silence</h2>
+                            <h3 className="text-4xl font-black tracking-tight leading-tight">Built for the Deep Work Era.</h3>
+                          </div>
+                          <p className="text-neutral-600 leading-relaxed font-medium">
+                            The modern workplace is a battlefield of notifications. Zenith was designed as a shield. Utilizing the Pomodoro technique, task prioritization, and low-stim aesthetics, it transforms your device from a source of stress into a source of clarity.
+                          </p>
+                          <div className="flex gap-12 pt-4">
+                            <div>
+                              <p className="text-3xl font-black">25m</p>
+                              <p className="text-[9px] font-black uppercase tracking-widest text-neutral-300">Standard Focus</p>
+                            </div>
+                            <div>
+                              <p className="text-3xl font-black">100%</p>
+                              <p className="text-[9px] font-black uppercase tracking-widest text-neutral-300">Cloud Sync</p>
+                            </div>
+                            <div>
+                              <p className="text-3xl font-black">0</p>
+                              <p className="text-[9px] font-black uppercase tracking-widest text-neutral-300">Ads/Trackers</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-neutral-900 rounded-[4rem] p-12 lg:p-20 text-white shadow-2xl relative overflow-hidden group">
+                           <div className="absolute -top-10 -right-10 opacity-10 rotate-12 group-hover:rotate-0 transition-transform duration-700">
+                             <Target size={300} />
+                           </div>
+                           <p className="text-2xl lg:text-4xl font-black italic leading-tight mb-8">
+                             "Focus is a matter of deciding what things you are not going to do."
+                           </p>
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-0.5 bg-white/20"></div>
+                              <span className="text-[10px] uppercase font-black tracking-[0.3em] text-white/40">Steve Jobs</span>
+                           </div>
+                        </div>
+                      </div>
+
+                      {/* Vision Section */}
+                      <div className="p-12 lg:p-24 bg-white border border-neutral-100 rounded-[4rem] text-center space-y-8 shadow-sm">
+                        <Globe className="mx-auto text-neutral-200" size={60} />
+                        <h3 className="text-3xl font-black tracking-tighter uppercase">Global Sanctuary</h3>
+                        <p className="text-neutral-400 font-medium max-w-xl mx-auto leading-relaxed">
+                          Zenith is a living product. We are constantly refining the interface to be even more invisible, even more helpful, and even more focused on your long-term success.
+                        </p>
+                        <div className="flex justify-center gap-4 pt-4">
+                           <span className="px-4 py-2 bg-neutral-100 rounded-full text-[9px] font-black uppercase tracking-widest">Version 1.0.4</span>
+                           <span className="px-4 py-2 bg-neutral-100 rounded-full text-[9px] font-black uppercase tracking-widest">Supabase Cloud</span>
+                        </div>
+                      </div>
                     </div>
                   )}
                   

@@ -21,7 +21,7 @@ export const Clock: React.FC = () => {
   };
 
   return (
-    <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-6 sm:p-8 text-neutral-800 shadow-sm flex flex-col items-center justify-center min-h-[180px] sm:min-h-[260px] relative overflow-hidden transition-all">
+    <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-6 sm:p-8 text-neutral-800 shadow-sm flex flex-col items-center justify-center h-full min-h-[260px] sm:min-h-[320px] relative overflow-hidden transition-all">
       <div className="relative w-16 h-16 sm:w-24 sm:h-24 border border-neutral-100 rounded-full flex items-center justify-center mb-4 sm:mb-6">
         {/* Hour Hand based on IST */}
         <div 

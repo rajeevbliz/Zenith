@@ -46,7 +46,7 @@ export const Pomodoro: React.FC = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#121212] to-[#242424] rounded-[2.5rem] p-6 sm:p-8 text-white shadow-xl flex flex-col items-center justify-center min-h-[220px] sm:min-h-[320px] transition-all">
+    <div className="bg-gradient-to-br from-[#121212] to-[#242424] rounded-[2.5rem] p-6 sm:p-8 text-white shadow-xl flex flex-col items-center justify-center h-full min-h-[260px] sm:min-h-[320px] transition-all">
       <div className="flex gap-2 mb-4 sm:mb-6 bg-white/5 p-1 rounded-2xl overflow-x-auto no-scrollbar w-full justify-center">
         {(['pomodoro', 'short', 'long', 'custom'] as const).map((m) => (
           <button 
