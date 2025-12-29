@@ -108,31 +108,41 @@
         animation: grain 12s steps(10) infinite;
       }
 
-      /* Checkbox Premium Styling */
+      /* Premium Uiverse Checkbox Styling - Modified for Zenith */
       .checkbox-container {
         display: inline-block;
         user-select: none;
+        width: 100%;
       }
+
       .task-checkbox {
         display: none;
       }
+
       .checkbox-label {
         display: flex;
         align-items: center;
         cursor: pointer;
         font-family: inherit;
         font-size: 16px;
-        color: #111827;
-        font-weight: 600;
+        color: #374151;
+        font-weight: 500;
         transition: all 0.2s ease;
-        padding: 6px 0;
+        padding: 8px;
         border-radius: 8px;
+        width: 100%;
       }
+
+      .checkbox-label:hover {
+        background: rgba(0, 0, 0, 0.02);
+        color: #111827;
+      }
+
       .checkbox-box {
         position: relative;
-        width: 20px;
-        height: 20px;
-        border: 2px solid #e5e7eb;
+        width: 22px;
+        height: 22px;
+        border: 2px solid #d1d5db;
         border-radius: 6px;
         margin-right: 12px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -140,26 +150,118 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: visible;
         flex-shrink: 0;
       }
-      .checkbox-box::after {
-        content: "";
-        width: 10px;
-        height: 10px;
-        background: #000;
-        border-radius: 2px;
+
+      .checkbox-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #000 0%, #333 100%);
         transform: scale(0);
-        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        border-radius: 4px;
+        opacity: 0;
       }
-      .task-checkbox:checked + .checkbox-label .checkbox-box {
+
+      .checkmark {
+        position: relative;
+        z-index: 2;
+        opacity: 0;
+        transform: scale(0.3) rotate(20deg);
+        transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .check-icon {
+        width: 12px;
+        height: 12px;
+        fill: white;
+      }
+
+      .success-ripple {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .checkbox-text {
+        transition: all 0.3s ease;
+        position: relative;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+
+      .checkbox-text::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: #9ca3af;
+        transition: width 0.4s ease;
+        transform: translateY(-50%);
+      }
+
+      .checkbox-label:hover .checkbox-box {
         border-color: #000;
       }
-      .task-checkbox:checked + .checkbox-label .checkbox-box::after {
-        transform: scale(1);
+
+      .task-checkbox:checked + .checkbox-label .checkbox-box {
+        border-color: #000;
+        background: #000;
       }
+
+      .task-checkbox:checked + .checkbox-label .checkbox-fill {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      .task-checkbox:checked + .checkbox-label .checkmark {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        animation: checkPop 0.3s ease-out 0.2s;
+      }
+
+      .task-checkbox:checked + .checkbox-label .success-ripple {
+        animation: rippleSuccess 0.6s ease-out;
+      }
+
       .task-checkbox:checked + .checkbox-label .checkbox-text {
         color: #9ca3af;
-        text-decoration: line-through;
+      }
+
+      .task-checkbox:checked + .checkbox-label .checkbox-text::after {
+        width: 100%;
+      }
+
+      .checkbox-label:active .checkbox-box {
+        transform: scale(0.95);
+      }
+
+      @keyframes checkPop {
+        0% { transform: scale(1) rotate(0deg); }
+        50% { transform: scale(1.2) rotate(-5deg); }
+        100% { transform: scale(1) rotate(0deg); }
+      }
+
+      @keyframes rippleSuccess {
+        0% { width: 0; height: 0; opacity: 0.6; }
+        70% { width: 50px; height: 50px; opacity: 0.3; }
+        100% { width: 60px; height: 60px; opacity: 0; }
       }
     </style>
   <script type="importmap">

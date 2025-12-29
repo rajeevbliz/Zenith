@@ -441,11 +441,25 @@ const OnboardingFlow: React.FC<{ onComplete: (profile: UserProfile) => void }> =
 };
 
 const ZenithCheckbox: React.FC<{ id: string; label: string; checked?: boolean; onChange?: (checked: boolean) => void }> = ({ id, label, checked, onChange }) => (
-  <div className="checkbox-container w-full">
-    <input type="checkbox" id={id} className="task-checkbox" checked={checked} onChange={(e) => onChange?.(e.target.checked)} />
-    <label htmlFor={id} className="checkbox-label flex items-center gap-3 py-3 w-full group">
-      <div className="checkbox-box flex-shrink-0 group-hover:border-black transition-colors"></div>
-      <span className="checkbox-text text-sm font-bold text-neutral-700 transition-all duration-300 truncate">{label}</span>
+  <div className="checkbox-container">
+    <input 
+      type="checkbox" 
+      id={id} 
+      className="task-checkbox" 
+      checked={checked} 
+      onChange={(e) => onChange?.(e.target.checked)} 
+    />
+    <label htmlFor={id} className="checkbox-label">
+      <div className="checkbox-box">
+        <div className="checkbox-fill"></div>
+        <div className="checkmark">
+          <svg viewBox="0 0 24 24" className="check-icon">
+            <path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"></path>
+          </svg>
+        </div>
+        <div className="success-ripple"></div>
+      </div>
+      <span className="checkbox-text truncate">{label}</span>
     </label>
   </div>
 );
