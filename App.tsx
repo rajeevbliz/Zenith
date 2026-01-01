@@ -32,7 +32,7 @@ interface PriorityItem {
   text: string;
   completed: boolean;
   category: PriorityCategory;
-  sub_category: PrioritySubCategory; // Updated to match Supabase snake_case
+  sub_category: PrioritySubCategory; 
 }
 
 type Section = 'clarity' | 'priorities' | 'planner' | 'notes' | 'feedback' | 'about';
@@ -99,6 +99,51 @@ const TaskProgressCircle: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
         <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">Session Progress</p>
         <div className="flex items-center gap-2 justify-center">
           <span className="text-xs font-bold">{done} of {total} items clear</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PriorityProgressCircle: React.FC<{ items: PriorityItem[]; title: string }> = ({ items, title }) => {
+  const total = items.length;
+  const done = items.filter(t => t.completed).length;
+  const percentage = total === 0 ? 0 : Math.round((done / total) * 100);
+  
+  const size = 180;
+  const center = size / 2;
+  const radius = 70;
+  const strokeWidth = 18;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="flex flex-col items-center justify-center p-8 bg-black rounded-[2.5rem] text-white shadow-2xl animate-in zoom-in duration-700">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
+          <circle cx={center} cy={center} r={radius} stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth} fill="none" />
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke="#ffffff"
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            fill="none"
+            className="transition-all duration-1000 ease-out"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+           <span className="text-4xl font-black tracking-tighter">{percentage}%</span>
+           <span className="text-[9px] font-black uppercase tracking-widest text-white/40">{title} Rate</span>
+        </div>
+      </div>
+      <div className="mt-6 text-center">
+        <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">Current Focus</p>
+        <div className="flex items-center gap-2 justify-center">
+          <span className="text-xs font-bold">{done} of {total} priorities met</span>
         </div>
       </div>
     </div>
@@ -182,9 +227,11 @@ const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     <div className="fixed inset-0 z-[1000] bg-white flex items-center justify-center animate-splash-exit overflow-hidden pointer-events-none">
       <div className="grain-overlay"></div>
       <div className="flex flex-col items-center relative z-[1010]">
-        <h1 className="text-5xl lg:text-7xl font-black text-black opacity-0 animate-zenith-emerge select-none tracking-[0.3em]">ZENITH</h1>
+        {/* Added mr-[-0.3em] to perfectly center tracking text */}
+        <h1 className="text-5xl lg:text-7xl font-black text-black opacity-0 animate-zenith-emerge select-none tracking-[0.3em] mr-[-0.3em]">ZENITH</h1>
         <div className="w-12 lg:w-20 h-[1px] bg-black/20 origin-center opacity-0 animate-line-draw my-6"></div>
-        <span className="text-[10px] lg:text-xs font-light text-neutral-400 uppercase opacity-0 animate-subtitle-float tracking-[0.6em] translate-x-[0.3em]">find clarity</span>
+        {/* Removed translate-x and added mr-[-0.6em] for tracking compensation */}
+        <span className="text-[10px] lg:text-xs font-light text-neutral-400 uppercase opacity-0 animate-subtitle-float tracking-[0.6em] mr-[-0.6em]">find clarity</span>
       </div>
     </div>
   );
@@ -496,29 +543,45 @@ const App: React.FC = () => {
 
   // Auth Listener & Data Fetcher
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setIsAuthenticated(!!session);
-      if (session) {
-        fetchProfile(session.user.id);
-        fetchUserData(session.user.id);
-      }
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setIsAuthenticated(false);
+          return;
+        }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setIsAuthenticated(!!session);
-      if (session) {
-        fetchProfile(session.user.id);
-        fetchUserData(session.user.id);
-      } else {
-        // Clear all data on logout and redirect to auth page
+        setSession(currentSession);
+        setIsAuthenticated(!!currentSession);
+        if (currentSession) {
+          fetchProfile(currentSession.user.id);
+          fetchUserData(currentSession.user.id);
+        }
+      } catch (err) {
+        console.error("Auth init failed:", err);
+      }
+    };
+
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === 'SIGNED_OUT') {
         setUserProfile(null);
         setTasks([]);
         setPriorities([]);
         setNotes([]);
+        setSession(null);
+        setIsAuthenticated(false);
         setActiveSection('clarity');
         setShowSettings(false);
+      } else if (newSession) {
+        setSession(newSession);
+        setIsAuthenticated(true);
+        fetchProfile(newSession.user.id);
+        fetchUserData(newSession.user.id);
       }
     });
 
@@ -657,7 +720,6 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // Redirect logic is handled by onAuthStateChange hook automatically
   };
 
   return (
@@ -696,7 +758,7 @@ const App: React.FC = () => {
                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"><User size={20} className="text-white/60" /></div>
                           <div className="flex-1 overflow-hidden">
                             <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-0.5">Focus Name</p>
-                            <p className="text-sm font-bold truncate tracking-tight">{userProfile.name}</p>
+                            <p className="text-sm font-bold truncate tracking-tight">{userProfile?.name || ''}</p>
                           </div>
                           <ShieldCheck size={18} className="text-emerald-400" />
                         </div>
@@ -726,7 +788,6 @@ const App: React.FC = () => {
                         <h1 className="text-4xl lg:text-6xl font-black tracking-tighter text-neutral-900 leading-tight">Hi, {userProfile?.name.split(' ')[0] || 'Zenith User'}.</h1>
                         <p className="text-xs lg:text-lg font-medium text-neutral-400 italic">Welcome back to your sanctuary.</p>
                       </div>
-                      {/* Dashboard Layout: Stacked on mobile, Shoulder-to-Shoulder on desktop */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 items-stretch">
                         <Pomodoro />
                         <Clock />
@@ -738,7 +799,11 @@ const App: React.FC = () => {
                     <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-5xl">
                       <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Focus.</h1>
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div className="lg:col-span-1 space-y-6"><ConcentricVisualizer priorities={priorities} /><TaskProgressCircle tasks={tasks} /></div>
+                        <div className="lg:col-span-1 space-y-6">
+                          <ConcentricVisualizer priorities={priorities} />
+                          {/* Corrected Progress Circle to track actual Priorities instead of Tasks */}
+                          <PriorityProgressCircle items={priorities.filter(p => p.category === activePriorityTab)} title={activePriorityTab} />
+                        </div>
                         <div className="lg:col-span-2 space-y-6">
                           <div className="flex p-1 bg-neutral-100 rounded-2xl">{(['Work', 'Project', 'Private'] as PriorityCategory[]).map(cat => (<button key={cat} onClick={() => setActivePriorityTab(cat)} className={`flex-1 py-3 text-[10px] lg:text-xs font-black uppercase tracking-widest rounded-xl transition-all ${activePriorityTab === cat ? 'bg-white text-black shadow-sm' : 'text-neutral-400 hover:text-neutral-600'}`}>{cat}</button>))}</div>
                           <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
@@ -832,7 +897,6 @@ const App: React.FC = () => {
 
                   {activeSection === 'about' && (
                     <div className="space-y-16 lg:space-y-32 pt-12 animate-in fade-in duration-1000 max-w-5xl mx-auto">
-                      {/* Hero Manifesto */}
                       <div className="text-center space-y-8 relative">
                         <div className="absolute inset-0 -z-10 flex items-center justify-center">
                           <Brain size={400} className="text-neutral-50 opacity-[0.4] stroke-[0.5]" />
@@ -846,7 +910,6 @@ const App: React.FC = () => {
                         </p>
                       </div>
 
-                      {/* Core Pillars */}
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div className="p-10 bg-white border border-neutral-100 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-500 group">
                           <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white mb-8 group-hover:scale-110 transition-transform shadow-lg shadow-black/10">
@@ -879,7 +942,6 @@ const App: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Detailed Story Section */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
                         <div className="space-y-8">
                           <div className="space-y-4">
@@ -918,7 +980,6 @@ const App: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Vision Section */}
                       <div className="p-12 lg:p-24 bg-white border border-neutral-100 rounded-[4rem] text-center space-y-8 shadow-sm">
                         <Globe className="mx-auto text-neutral-200" size={60} />
                         <h3 className="text-3xl font-black tracking-tighter uppercase">Global Sanctuary</h3>
