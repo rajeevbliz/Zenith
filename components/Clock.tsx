@@ -21,28 +21,28 @@ export const Clock: React.FC = () => {
   };
 
   return (
-    <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-6 sm:p-8 text-neutral-800 shadow-sm flex flex-col items-center justify-center h-full min-h-[260px] sm:min-h-[320px] relative overflow-hidden transition-all">
-      <div className="relative w-16 h-16 sm:w-24 sm:h-24 border border-neutral-100 rounded-full flex items-center justify-center mb-4 sm:mb-6">
+    <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 sm:p-10 text-neutral-900 shadow-sm flex flex-col items-center justify-center h-full min-h-[300px] sm:min-h-[360px] relative overflow-hidden transition-all hover:border-neutral-200">
+      <div className="relative w-20 h-20 sm:w-28 sm:h-28 border-2 border-neutral-100 rounded-full flex items-center justify-center mb-6 sm:mb-8 shadow-inner bg-neutral-50/30">
         {/* Hour Hand based on IST */}
         <div 
-          className="absolute w-0.5 h-6 sm:h-8 bg-neutral-200 origin-bottom bottom-1/2 rounded-full transition-transform duration-500"
+          className="absolute w-1 h-8 sm:h-10 bg-neutral-300 origin-bottom bottom-1/2 rounded-full transition-transform duration-500 shadow-sm"
           style={{ transform: `rotate(${istDate.getHours() * 30 + istDate.getMinutes() * 0.5}deg)` }}
         />
         {/* Minute Hand based on IST */}
         <div 
-          className="absolute w-[0.5px] h-8 sm:h-10 bg-neutral-400 origin-bottom bottom-1/2 transition-transform duration-500"
+          className="absolute w-0.5 h-10 sm:h-14 bg-neutral-500 origin-bottom bottom-1/2 rounded-full transition-transform duration-500 shadow-sm"
           style={{ transform: `rotate(${istDate.getMinutes() * 6}deg)` }}
         />
-        <div className="w-1.5 h-1.5 bg-neutral-900 rounded-full z-10" />
+        <div className="w-2.5 h-2.5 bg-neutral-900 rounded-full z-10 shadow-lg" />
       </div>
       
-      <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-        <div className="text-2xl sm:text-4xl font-black tracking-tighter leading-none">
+      <div className="flex flex-col items-center gap-1 sm:gap-2">
+        <div className="text-3xl sm:text-5xl font-black tracking-tighter leading-none text-neutral-900 drop-shadow-sm">
           {formatDigitalTime(istDate)}
         </div>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="px-1.5 py-0.5 bg-neutral-900 text-white text-[7px] sm:text-[8px] font-black rounded-md uppercase tracking-widest">IST</span>
-          <div className="text-[8px] sm:text-[9px] uppercase font-black tracking-[0.2em] text-neutral-300">Synchronized</div>
+        <div className="flex items-center gap-3 mt-2">
+          <span className="px-3 py-1 bg-black text-white text-[9px] sm:text-[10px] font-black rounded-lg uppercase tracking-[0.2em] shadow-lg">IST</span>
+          <div className="text-[10px] sm:text-[11px] uppercase font-black tracking-[0.3em] text-neutral-400">Synchronized</div>
         </div>
       </div>
     </div>

@@ -8,12 +8,13 @@ import {
   FileText, Copy, Check, ChevronRight, UserCircle,
   Bell, BellOff, Activity, Eye, EyeOff, Sparkles, Eye as EyeIcon,
   ShieldCheck, AlertCircle, Database, RefreshCw, Terminal,
-  HardDrive, Key, Lock, Zap, Shield, Globe, Layers, Feather
+  HardDrive, Key, Lock, Zap, Shield, Globe, Layers, Feather,
+  Flag, Trophy, Flame
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { Pomodoro } from './components/Pomodoro';
 import { Clock } from './components/Clock';
-import { Task } from './types';
+import { Task, Goal } from './types';
 
 // Types
 type PriorityCategory = 'Work' | 'Project' | 'Private';
@@ -35,7 +36,14 @@ interface PriorityItem {
   sub_category: PrioritySubCategory; 
 }
 
-type Section = 'clarity' | 'priorities' | 'planner' | 'notes' | 'feedback' | 'about';
+interface Habit {
+  id: string;
+  title: string;
+  completed_today: boolean;
+  streak: number;
+}
+
+type Section = 'clarity' | 'priorities' | 'habits' | 'planner' | 'notes' | 'goals' | 'feedback' | 'about';
 
 const renderMarkdown = (content: string) => {
   if (!content) return '';
@@ -227,10 +235,8 @@ const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     <div className="fixed inset-0 z-[1000] bg-white flex items-center justify-center animate-splash-exit overflow-hidden pointer-events-none">
       <div className="grain-overlay"></div>
       <div className="flex flex-col items-center relative z-[1010]">
-        {/* Added mr-[-0.3em] to perfectly center tracking text */}
         <h1 className="text-5xl lg:text-7xl font-black text-black opacity-0 animate-zenith-emerge select-none tracking-[0.3em] mr-[-0.3em]">ZENITH</h1>
         <div className="w-12 lg:w-20 h-[1px] bg-black/20 origin-center opacity-0 animate-line-draw my-6"></div>
-        {/* Removed translate-x and added mr-[-0.6em] for tracking compensation */}
         <span className="text-[10px] lg:text-xs font-light text-neutral-400 uppercase opacity-0 animate-subtitle-float tracking-[0.6em] mr-[-0.6em]">find clarity</span>
       </div>
     </div>
@@ -525,6 +531,8 @@ const App: React.FC = () => {
   
   const [tasks, setTasks] = useState<Task[]>([]);
   const [priorities, setPriorities] = useState<PriorityItem[]>([]);
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [activePriorityTab, setActivePriorityTab] = useState<PriorityCategory>('Work');
   const [notes, setNotes] = useState<any[]>([]);
 
@@ -535,6 +543,8 @@ const App: React.FC = () => {
   const [newPriorityInputs, setNewPriorityInputs] = useState<Record<string, string>>({});
   const [priorityAddingTo, setPriorityAddingTo] = useState<PrioritySubCategory | null>(null);
   const [newNote, setNewNote] = useState({ title: '', content: '' });
+  const [newHabitTitle, setNewHabitTitle] = useState('');
+  const [newGoalText, setNewGoalText] = useState('');
 
   const [feedbackEmail, setFeedbackEmail] = useState('');
   const [feedbackText, setFeedbackText] = useState('');
@@ -572,6 +582,8 @@ const App: React.FC = () => {
         setUserProfile(null);
         setTasks([]);
         setPriorities([]);
+        setHabits([]);
+        setGoals([]);
         setNotes([]);
         setSession(null);
         setIsAuthenticated(false);
@@ -602,14 +614,18 @@ const App: React.FC = () => {
   };
 
   const fetchUserData = async (userId: string) => {
-    const [t, p, n] = await Promise.all([
+    const [t, p, n, h, g] = await Promise.all([
       supabase.from('tasks').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from('priorities').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
-      supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+      supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('habits').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('goals').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     ]);
     if (t.data) setTasks(t.data);
     if (p.data) setPriorities(p.data);
     if (n.data) setNotes(n.data);
+    if (h.data) setHabits(h.data);
+    if (g.data) setGoals(g.data);
   };
 
   const handleAddTask = async () => {
@@ -664,6 +680,61 @@ const App: React.FC = () => {
     await supabase.from('priorities').delete().eq('id', id);
   };
 
+  const addHabit = async () => {
+    if (!newHabitTitle.trim() || !session) return;
+    const { data } = await supabase.from('habits').insert({
+      user_id: session.user.id,
+      title: newHabitTitle,
+      streak: 0,
+      completed_today: false
+    }).select().single();
+    if (data) setHabits([data, ...habits]);
+    setNewHabitTitle('');
+  };
+
+  const toggleHabit = async (id: string) => {
+    const habit = habits.find(h => h.id === id);
+    if (!habit) return;
+    const newStatus = !habit.completed_today;
+    
+    // Accurate streak calculation:
+    // If marking as complete, increment. 
+    // If unmarking (not completed), reset the streak to 0.
+    const newStreak = newStatus ? habit.streak + 1 : 0;
+    
+    setHabits(habits.map(h => h.id === id ? { ...h, completed_today: newStatus, streak: newStreak } : h));
+    await supabase.from('habits').update({ completed_today: newStatus, streak: newStreak }).eq('id', id);
+  };
+
+  const deleteHabit = async (id: string) => {
+    setHabits(habits.filter(h => h.id !== id));
+    await supabase.from('habits').delete().eq('id', id);
+  };
+
+  const addGoal = async () => {
+    if (!newGoalText.trim() || !session) return;
+    const { data } = await supabase.from('goals').insert({
+      user_id: session.user.id,
+      text: newGoalText,
+      completed: false
+    }).select().single();
+    if (data) setGoals([data, ...goals]);
+    setNewGoalText('');
+  };
+
+  const toggleGoal = async (id: string) => {
+    const goal = goals.find(g => g.id === id);
+    if (!goal) return;
+    const newCompleted = !goal.completed;
+    setGoals(goals.map(g => g.id === id ? { ...g, completed: newCompleted } : g));
+    await supabase.from('goals').update({ completed: newCompleted }).eq('id', id);
+  };
+
+  const deleteGoal = async (id: string) => {
+    setGoals(goals.filter(g => g.id !== id));
+    await supabase.from('goals').delete().eq('id', id);
+  };
+
   const addNote = async () => {
     if ((!newNote.title && !newNote.content) || !session) return;
     const { data } = await supabase.from('notes').insert({
@@ -700,8 +771,10 @@ const App: React.FC = () => {
         {[
           { id: 'clarity', label: 'Clarity', icon: Home },
           { id: 'priorities', label: 'Focus', icon: Target },
+          { id: 'habits', label: 'Rituals', icon: Activity },
           { id: 'planner', label: 'Planner', icon: ListTodo },
           { id: 'notes', label: 'Notes', icon: StickyNote },
+          { id: 'goals', label: 'Aspirations', icon: Flag },
           { id: 'about', label: 'About', icon: Info },
         ].map((item) => (
           <button key={item.id} onClick={() => navigate(item.id as Section)} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${activeSection === item.id ? 'bg-black text-white shadow-xl scale-[1.02]' : 'text-neutral-400 hover:text-black hover:bg-neutral-50'}`}>
@@ -801,7 +874,6 @@ const App: React.FC = () => {
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                         <div className="lg:col-span-1 space-y-6">
                           <ConcentricVisualizer priorities={priorities} />
-                          {/* Corrected Progress Circle to track actual Priorities instead of Tasks */}
                           <PriorityProgressCircle items={priorities.filter(p => p.category === activePriorityTab)} title={activePriorityTab} />
                         </div>
                         <div className="lg:col-span-2 space-y-6">
@@ -811,7 +883,48 @@ const App: React.FC = () => {
                               <div key={sub} className="space-y-2">
                                 <div className="flex items-center justify-between mb-2"><h3 className="text-[10px] lg:text-xs font-black text-neutral-300 uppercase tracking-widest">{sub}</h3><button onClick={() => setPriorityAddingTo(sub)} className="text-neutral-200 hover:text-black transition-colors"><Plus size={18} /></button></div>
                                 {priorityAddingTo === sub && <input autoFocus type="text" placeholder="..." className="w-full bg-neutral-50 border-b border-black py-3 px-1 text-sm font-bold outline-none mb-4" value={newPriorityInputs[`${activePriorityTab}-${sub}`] || ''} onChange={(e) => setNewPriorityInputs({...newPriorityInputs, [`${activePriorityTab}-${sub}`]: e.target.value})} onKeyDown={(e) => { if(e.key === 'Enter') addPriority(activePriorityTab, sub); if(e.key === 'Escape') setPriorityAddingTo(null); }} />}
-                                <div className="space-y-1">{priorities.filter(p => p.category === activePriorityTab && p.sub_category === sub).map(item => (<div key={item.id} className="flex items-center justify-between group py-1.5 transition-all"><ZenithCheckbox id={item.id} label={item.text} checked={item.completed} onChange={() => togglePriority(item.id)} /><button onClick={() => deletePriority(item.id)} className="p-2 text-neutral-200 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><Trash2 size={16} /></button></div>))}</div>
+                                <div className="space-y-1">{priorities.filter(p => p.category === activePriorityTab && p.sub_category === sub).map(item => (<div key={item.id} className="flex items-center justify-between group py-1.5 transition-all"><ZenithCheckbox id={item.id} label={item.text} checked={item.completed} onChange={() => togglePriority(item.id)} /><button onClick={() => deletePriority(item.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={16} /></button></div>))}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeSection === 'habits' && (
+                    <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-5xl">
+                      <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Rituals.</h1>
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div className="lg:col-span-1">
+                          <div className="bg-black p-8 rounded-[2.5rem] text-white shadow-2xl flex flex-col items-center justify-center text-center">
+                            <Flame size={48} className="text-orange-500 mb-4" />
+                            <h3 className="text-xl font-black mb-2 uppercase tracking-tighter">Consistency</h3>
+                            <p className="text-[10px] text-white/50 uppercase tracking-widest leading-relaxed">Daily routines form the architecture of a focused life.</p>
+                          </div>
+                        </div>
+                        <div className="lg:col-span-2 space-y-6">
+                          <div className="relative flex items-center gap-2">
+                            <input type="text" value={newHabitTitle} onChange={(e) => setNewHabitTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addHabit()} placeholder="New ritual..." className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl py-6 pl-8 pr-16 text-sm font-black outline-none focus:border-black transition-all" />
+                            <button onClick={addHabit} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black text-white rounded-xl shadow-lg hover:bg-neutral-800 transition-all"><Plus size={20} /></button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {habits.map(habit => (
+                              <div key={habit.id} className="bg-white border border-neutral-100 rounded-[2rem] p-6 shadow-sm group hover:border-neutral-300 transition-all relative">
+                                <div className="flex items-center justify-between mb-4">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <Flame size={14} className={habit.streak > 0 ? "text-orange-500" : "text-neutral-200"} />
+                                    <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{habit.streak} Day Streak</span>
+                                    {habit.streak >= 7 && (
+                                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-amber-100 bg-amber-50 animate-in zoom-in slide-in-from-left-2 duration-700">
+                                        <Sparkles size={10} className="text-amber-500" />
+                                        <span className="text-[8px] font-black tracking-widest uppercase text-amber-700">Zenith 7+</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <button onClick={() => deleteHabit(habit.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={16} /></button>
+                                </div>
+                                <ZenithCheckbox id={habit.id} label={habit.title} checked={habit.completed_today} onChange={() => toggleHabit(habit.id)} />
                               </div>
                             ))}
                           </div>
@@ -834,7 +947,7 @@ const App: React.FC = () => {
                                 <button onClick={handleAddTask} className="p-3 bg-black text-white rounded-xl shadow-lg hover:bg-neutral-800 transition-all"><Plus size={20} /></button>
                               </div>
                             </div>
-                            <div className="space-y-2">{tasks.map(task => (<div key={task.id} className="flex items-center justify-between group py-3 border-b border-neutral-50 last:border-0 hover:bg-neutral-50/50 rounded-xl transition-all"><div className="flex items-center gap-3 flex-1"><ZenithCheckbox id={task.id} label={task.title} checked={task.status === 'done'} onChange={() => toggleTask(task.id)} />{task.remind && task.status !== 'done' && <Bell size={14} className="text-neutral-300" />}</div><button onClick={() => deleteTask(task.id)} className="p-2 text-neutral-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button></div>))}</div>
+                            <div className="space-y-2">{tasks.map(task => (<div key={task.id} className="flex items-center justify-between group py-3 border-b border-neutral-50 last:border-0 hover:bg-neutral-50/50 rounded-xl transition-all"><div className="flex items-center gap-3 flex-1"><ZenithCheckbox id={task.id} label={task.title} checked={task.status === 'done'} onChange={() => toggleTask(task.id)} />{task.remind && task.status !== 'done' && <Bell size={14} className="text-neutral-300" />}</div><button onClick={() => deleteTask(task.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={16} /></button></div>))}</div>
                           </div>
                         </div>
                       </div>
@@ -856,11 +969,43 @@ const App: React.FC = () => {
                         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                           {notes.map(note => (
                             <div key={note.id} className="bg-white p-8 rounded-[1.5rem] border border-neutral-100 shadow-sm relative group hover:shadow-md transition-all">
-                              <div className="flex items-start justify-between mb-4"><h4 className="text-xl font-black text-black flex-1">{note.title}</h4><button onClick={() => deleteNote(note.id)} className="text-neutral-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={18} /></button></div>
+                              <div className="flex items-start justify-between mb-4"><h4 className="text-xl font-black text-black flex-1">{note.title}</h4><button onClick={() => deleteNote(note.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={18} /></button></div>
                               <div className="text-neutral-600 font-medium text-sm lg:text-base mb-6 prose prose-sm line-clamp-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(note.content) }} />
                               <span className="text-[9px] font-black text-neutral-200 uppercase tracking-widest absolute bottom-6 right-8">{note.date_label}</span>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeSection === 'goals' && (
+                    <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-5xl mx-auto">
+                      <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Aspirations.</h1>
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div className="lg:col-span-1">
+                          <div className="bg-black p-8 rounded-[2.5rem] text-white shadow-2xl flex flex-col items-center justify-center text-center">
+                            <Trophy size={48} className="text-yellow-500 mb-4" />
+                            <h3 className="text-xl font-black mb-2 uppercase tracking-tighter">North Star</h3>
+                            <p className="text-[10px] text-white/50 uppercase tracking-widest leading-relaxed">Focus on the meaningful milestones that define your long-term path.</p>
+                          </div>
+                        </div>
+                        <div className="lg:col-span-2 space-y-6">
+                          <div className="relative flex items-center gap-2">
+                            <input type="text" value={newGoalText} onChange={(e) => setNewGoalText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addGoal()} placeholder="Define a high-level goal..." className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl py-6 pl-8 pr-16 text-sm font-black outline-none focus:border-black transition-all" />
+                            <button onClick={addGoal} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black text-white rounded-xl shadow-lg hover:bg-neutral-800 transition-all"><Plus size={20} /></button>
+                          </div>
+                          <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 shadow-sm space-y-4">
+                            {goals.length === 0 && <p className="text-center text-neutral-300 text-[10px] font-black uppercase tracking-widest py-12 italic">No aspirations defined yet.</p>}
+                            {goals.map(goal => (
+                              <div key={goal.id} className="flex items-center justify-between group py-4 border-b border-neutral-50 last:border-0 transition-all">
+                                <div className="flex items-center gap-4 flex-1">
+                                  <ZenithCheckbox id={goal.id} label={goal.text} checked={goal.completed} onChange={() => toggleGoal(goal.id)} />
+                                </div>
+                                <button onClick={() => deleteGoal(goal.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={18} /></button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -946,7 +1091,7 @@ const App: React.FC = () => {
                         <div className="space-y-8">
                           <div className="space-y-4">
                             <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-400">The Technology of Silence</h2>
-                            <h3 className="text-4xl font-black tracking-tight leading-tight">Built for the Deep Work Era.</h3>
+                            <h3 className="text-4xl font-black tracking-tight leading-tight text-neutral-900">Built for the Deep Work Era.</h3>
                           </div>
                           <p className="text-neutral-600 leading-relaxed font-medium">
                             The modern workplace is a battlefield of notifications. Zenith was designed as a shield. Utilizing the Pomodoro technique, task prioritization, and low-stim aesthetics, it transforms your device from a source of stress into a source of clarity.
