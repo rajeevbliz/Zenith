@@ -1,20 +1,95 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+<p align="center">
+  <img 
+    src="https://i.postimg.cc/SRdGFjH9/Black_White_Minimalist_Initials_Logo.png" 
+    width="110" 
+    alt="Zenith logo" 
+  />
+</p>
 
-# Run and deploy your AI Studio app
+<h1 align="center">Zenith</h1>
+<p align="center">
+  Minimalist habit tracking focused on clarity, consistency, and dopamine control.
+</p>
 
-This contains everything you need to run your app locally.
+<p align="center">
+  <a href="https://zenithflow.netlify.app/" target="_blank">
+    https://zenithflow.netlify.app/
+  </a>
+</p>
 
-View your app in AI Studio: https://ai.studio/apps/drive/1pho34uCZRlA1b90pGyCSAl2_hJgHMNOh
+<p align="center">
+  <img src="https://img.shields.io/badge/status-active-success" />
+  <img src="https://img.shields.io/badge/platform-android-blue" />
+  <img src="https://img.shields.io/badge/focus-minimalism-black" />
+</p>
 
-## Run Locally
+---
 
-**Prerequisites:**  Node.js
+## 🧠 What is Zenith?
 
+**Zenith** is a minimalist habit tracker designed to reduce noise, not add more of it.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Most habit apps rely on streak pressure, excessive rewards, and notifications.
+Zenith takes the opposite approach — **calm, intentional habit building**
+with a focus on dopamine management and long-term consistency.
+
+---
+
+## 🎯 Core Philosophy
+
+- Minimal UI, zero clutter  
+- No artificial dopamine spikes  
+- Progress over perfection  
+- Habits as systems, not streaks  
+
+Zenith is built for users who want **control**, not addiction.
+
+---
+
+## ✨ Features
+
+- Simple habit tracking  
+- Distraction-free interface  
+- Reduced dopamine feedback loops  
+- Focus on daily execution  
+- Clean, dark-first design  
+
+No unnecessary gamification. No noise.
+
+---
+
+## 🛠 Tech Stack
+
+- Android (Kotlin)
+- Modern UI architecture
+- Authentication & sync (in progress)
+- Minimal design system
+
+---
+
+Current focus:
+- Core habit workflows
+- UI/UX refinement
+- Performance and stability
+
+---
+
+## 👤 Built By
+
+**Rajeev (BlizX)**  
+Android & Web Developer  
+Building calm, focused products.
+
+---
+
+## 🔗 Product Link
+
+Live preview:  
+👉 https://zenithflow.netlify.app/
+
+---
+
+## 📄 License
+
+Currently private / closed-source.  
+Licensing details will be added later.
