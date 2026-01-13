@@ -59,10 +59,9 @@ No unnecessary gamification. No noise.
 ---
 
 ## 🛠 Tech Stack
-
-- Android (Kotlin)
+- Web App (Typescript, HTML)
 - Modern UI architecture
-- Authentication & sync (in progress)
+- Authentication & sync 
 - Minimal design system
 
 ---
