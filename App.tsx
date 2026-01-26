@@ -753,8 +753,9 @@ const App: React.FC = () => {
           <SlidersHorizontal size={22} strokeWidth={3} /><span className="text-sm font-black uppercase tracking-widest">Settings</span>
         </button>
       </nav>
-      <div className="mt-8 pt-6 border-t border-neutral-100 font-black">
+      <div className="mt-8 pt-6 border-t border-neutral-100 font-black flex flex-col gap-2">
          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-200 text-center">Protocol V1.4</p>
+         <p className="text-black font-black text-[11px] uppercase tracking-widest text-center">Made by Blizx</p>
       </div>
     </div>
   );
@@ -991,21 +992,24 @@ const App: React.FC = () => {
                         {calendarDays.map((d, i) => {
                           if (!d) return <div key={`empty-${i}`} className="p-3 font-black" />;
                           const isSelected = selectedDate === d.date;
-                          const hasTasks = tasks.some(t => t.date && t.date.startsWith(d.date));
+                          const dayTasks = tasks.filter(t => t.date && t.date.startsWith(d.date));
+                          const hasTasks = dayTasks.length > 0;
+                          const hasReminders = dayTasks.some(t => t.remind);
                           const isToday = d.date === getTodayStr();
                           
                           return (
                             <button 
                               key={d.date}
                               onClick={() => setSelectedDate(d.date)}
-                              className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all aspect-square font-black ${isSelected ? 'bg-black text-white shadow-xl scale-110' : 'hover:bg-neutral-50 text-neutral-900'}`}
+                              className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all aspect-square font-black ${isSelected ? 'bg-black text-white shadow-xl scale-110 z-10' : 'hover:bg-neutral-50 text-neutral-900'}`}
                             >
-                              <span className={`text-[11px] font-black ${isToday && !isSelected ? 'underline decoration-2' : ''}`}>{d.day}</span>
-                              {hasTasks && !isSelected && (
-                                <div className="absolute bottom-1.5 w-1.5 h-1.5 bg-black rounded-full" />
-                              )}
-                              {hasTasks && isSelected && (
-                                <div className="absolute bottom-1.5 w-1.5 h-1.5 bg-white rounded-full" />
+                              <span className={`text-[11px] font-black ${isToday && !isSelected ? 'underline underline-offset-4 decoration-2 decoration-black/20' : ''}`}>{d.day}</span>
+                              {hasTasks && (
+                                <div className="absolute bottom-1.5 flex flex-col items-center gap-0.5 w-full px-2">
+                                   {/* Updated reminder indicator to subtle accent bar */}
+                                   <div className={`h-1 rounded-full transition-all ${isSelected ? 'w-4 bg-white/80' : 'w-3 bg-neutral-900/10'}`} />
+                                   {hasReminders && <div className={`h-1 rounded-full w-2 ${isSelected ? 'bg-emerald-400' : 'bg-emerald-500/30'}`} />}
+                                </div>
                               )}
                             </button>
                           );
@@ -1254,8 +1258,9 @@ const App: React.FC = () => {
               </div>
             )}
             
-            <footer className="mt-20 text-center py-8 border-t border-neutral-50 font-black">
+            <footer className="mt-20 text-center py-8 border-t border-neutral-50 font-black flex flex-col items-center gap-2">
               <p className="text-neutral-300 font-black uppercase tracking-[0.5em] text-[10px]">Zenith Sanctuary • MMXXIV</p>
+              <p className="text-black font-black text-[11px] uppercase tracking-widest">Made by Blizx</p>
             </footer>
           </div>
         </main>
