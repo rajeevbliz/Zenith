@@ -1,20 +1,21 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  Brain, Home, ListTodo, Calendar, 
+  Brain, Home, ListTodo, Calendar as CalendarIcon, 
   StickyNote, Target, SlidersHorizontal, X, Trash2,
   Info, Plus, LogOut, Loader2,
   Wind, Menu, Mail, MessageSquare, Send, CheckCircle, User,
   FileText, Copy, Check, ChevronRight, UserCircle,
-  Bell, BellOff, Activity, Eye, EyeOff, Sparkles, Eye as EyeIcon,
+  Bell, BellOff, Activity, Eye, EyeOff, Sparkles,
   ShieldCheck, AlertCircle, Database, RefreshCw, Terminal,
   HardDrive, Key, Lock, Zap, Shield, Globe, Layers, Feather,
-  Flag, Trophy, Flame
+  Flame, Trophy, ChevronLeft, Coffee, Sunset, Mountain, Anchor, Compass, Heart, Moon,
+  Edit2
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { Pomodoro } from './components/Pomodoro';
 import { Clock } from './components/Clock';
-import { Task, Goal } from './types';
+import { Task } from './types';
 
 // Types
 type PriorityCategory = 'Work' | 'Project' | 'Private';
@@ -36,27 +37,29 @@ interface PriorityItem {
   sub_category: PrioritySubCategory; 
 }
 
-interface Habit {
-  id: string;
-  title: string;
-  completed_today: boolean;
-  streak: number;
-}
+type Section = 'clarity' | 'priorities' | 'planner' | 'notes' | 'feedback' | 'about';
 
-type Section = 'clarity' | 'priorities' | 'habits' | 'planner' | 'notes' | 'goals' | 'feedback' | 'about';
+// Helper to get local date string YYYY-MM-DD
+const getTodayStr = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
 const renderMarkdown = (content: string) => {
   if (!content) return '';
   let html = content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-black text-black">$1</strong>');
-  html = html.replace(/\*(.*?)\*/g, '<em class="italic opacity-80">$1</em>');
+  html = html.replace(/\*(.*?)\*/g, '<em class="italic opacity-80 font-black">$1</em>');
   const lines = html.split('\n');
   let inList = false;
   const processedLines = lines.map(line => {
     if (line.trim().startsWith('- ')) {
       const item = line.trim().substring(2);
       let res = '';
-      if (!inList) { res = '<ul class="list-disc ml-4 space-y-1 my-2">'; inList = true; }
+      if (!inList) { res = '<ul class="list-disc ml-4 space-y-1 my-2 font-black">'; inList = true; }
       return res + `<li>${item}</li>`;
     } else {
       let res = '';
@@ -106,7 +109,7 @@ const TaskProgressCircle: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
       <div className="mt-6 text-center">
         <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">Session Progress</p>
         <div className="flex items-center gap-2 justify-center">
-          <span className="text-xs font-bold">{done} of {total} items clear</span>
+          <span className="text-xs font-black">{done} of {total} items clear</span>
         </div>
       </div>
     </div>
@@ -151,7 +154,7 @@ const PriorityProgressCircle: React.FC<{ items: PriorityItem[]; title: string }>
       <div className="mt-6 text-center">
         <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">Current Focus</p>
         <div className="flex items-center gap-2 justify-center">
-          <span className="text-xs font-bold">{done} of {total} priorities met</span>
+          <span className="text-xs font-black">{done} of {total} priorities met</span>
         </div>
       </div>
     </div>
@@ -237,7 +240,7 @@ const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       <div className="flex flex-col items-center relative z-[1010]">
         <h1 className="text-5xl lg:text-7xl font-black text-black opacity-0 animate-zenith-emerge select-none tracking-[0.3em] mr-[-0.3em]">ZENITH</h1>
         <div className="w-12 lg:w-20 h-[1px] bg-black/20 origin-center opacity-0 animate-line-draw my-6"></div>
-        <span className="text-[10px] lg:text-xs font-light text-neutral-400 uppercase opacity-0 animate-subtitle-float tracking-[0.6em] mr-[-0.6em]">find clarity</span>
+        <span className="text-[10px] lg:text-xs font-black text-neutral-400 uppercase opacity-0 animate-subtitle-float tracking-[0.6em] mr-[-0.6em]">find clarity</span>
       </div>
     </div>
   );
@@ -300,7 +303,7 @@ const AuthPage: React.FC<{ onAuthSuccess: () => void }> = ({ onAuthSuccess }) =>
   };
 
   return (
-    <div className="fixed inset-0 z-[600] bg-[#f5f5f5] flex items-center justify-center p-6 animate-in fade-in duration-500 overflow-y-auto">
+    <div className="fixed inset-0 z-[600] bg-[#f5f5f5] flex items-center justify-center p-6 animate-in fade-in duration-500 overflow-y-auto font-black">
       <div className="w-full flex items-center justify-center">
         <div className="w-full max-w-sm bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-neutral-100 p-8 sm:p-10 space-y-8 relative">
           <div className="text-center space-y-4">
@@ -313,7 +316,7 @@ const AuthPage: React.FC<{ onAuthSuccess: () => void }> = ({ onAuthSuccess }) =>
             </div>
           </div>
 
-          <div className="flex p-1 bg-neutral-100 rounded-2xl shadow-inner">
+          <div className="flex p-1 bg-neutral-100 rounded-2xl shadow-inner font-black">
             {(['signin', 'signup'] as const).map(m => (
               <button 
                 key={m} 
@@ -332,7 +335,7 @@ const AuthPage: React.FC<{ onAuthSuccess: () => void }> = ({ onAuthSuccess }) =>
                 type="email" 
                 required 
                 placeholder="email@example.com" 
-                className="w-full bg-neutral-50 border border-neutral-100 py-4 px-6 text-neutral-900 font-bold rounded-2xl focus:border-black focus:ring-0 outline-none transition-all placeholder:text-neutral-300" 
+                className="w-full bg-neutral-50 border border-neutral-100 py-4 px-6 text-neutral-900 font-black rounded-2xl focus:border-black focus:ring-0 outline-none transition-all placeholder:text-neutral-300" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
               />
@@ -344,7 +347,7 @@ const AuthPage: React.FC<{ onAuthSuccess: () => void }> = ({ onAuthSuccess }) =>
                   type={showPassword ? "text" : "password"} 
                   required 
                   placeholder="••••••••" 
-                  className="w-full bg-neutral-50 border border-neutral-100 py-4 px-6 text-neutral-900 font-bold rounded-2xl focus:border-black focus:ring-0 outline-none transition-all placeholder:text-neutral-300 pr-12" 
+                  className="w-full bg-neutral-50 border border-neutral-100 py-4 px-6 text-neutral-900 font-black rounded-2xl focus:border-black focus:ring-0 outline-none transition-all placeholder:text-neutral-300 pr-12" 
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                 />
@@ -382,7 +385,7 @@ const AuthPage: React.FC<{ onAuthSuccess: () => void }> = ({ onAuthSuccess }) =>
             <div className="p-4 bg-red-50 border border-red-100 rounded-2xl animate-in slide-in-from-top-2">
                <div className="flex gap-3 text-red-700">
                  <AlertCircle className="shrink-0" size={16} />
-                 <p className="text-[10px] font-bold leading-relaxed">{error}</p>
+                 <p className="text-[10px] font-black leading-relaxed">{error}</p>
                </div>
             </div>
           )}
@@ -391,7 +394,7 @@ const AuthPage: React.FC<{ onAuthSuccess: () => void }> = ({ onAuthSuccess }) =>
             <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl animate-in slide-in-from-top-2">
                <div className="flex gap-3 text-emerald-700">
                  <CheckCircle className="shrink-0" size={16} />
-                 <p className="text-[10px] font-bold leading-relaxed">{success}</p>
+                 <p className="text-[10px] font-black leading-relaxed">{success}</p>
                </div>
             </div>
           )}
@@ -423,8 +426,6 @@ const OnboardingFlow: React.FC<{ onComplete: (profile: UserProfile) => void }> =
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No session");
 
-      const finalProfile = { ...profile, completedOnboarding: true };
-      
       const { error } = await supabase
         .from('profiles')
         .upsert({ 
@@ -436,7 +437,7 @@ const OnboardingFlow: React.FC<{ onComplete: (profile: UserProfile) => void }> =
         });
 
       if (error) throw error;
-      onComplete(finalProfile);
+      onComplete({ ...profile, completedOnboarding: true });
     } catch (err: any) {
       console.error(err.message);
     } finally {
@@ -446,14 +447,14 @@ const OnboardingFlow: React.FC<{ onComplete: (profile: UserProfile) => void }> =
 
   if (step === 1) {
     return (
-      <div className="fixed inset-0 z-[500] bg-white flex flex-col items-center justify-center p-8 overflow-y-auto animate-in fade-in duration-700">
+      <div className="fixed inset-0 z-[500] bg-white flex flex-col items-center justify-center p-8 overflow-y-auto animate-in fade-in duration-700 font-black">
         <div className="max-w-md w-full space-y-12 text-center sm:text-left">
           <div className="space-y-6">
             <p className="text-xs font-black uppercase tracking-[0.4em] text-neutral-400">Identity Established</p>
             <h1 className="text-5xl font-black tracking-tighter text-neutral-900 leading-none">Welcome.</h1>
             <div className="space-y-4">
-              <p className="text-lg font-bold text-neutral-800 leading-relaxed">You are entering a digital sanctuary designed for depth.</p>
-              <p className="text-sm font-medium text-neutral-500 leading-relaxed">Zenith silences the modern noise. Your data is synced securely.</p>
+              <p className="text-lg font-black text-neutral-800 leading-relaxed">You are entering a digital sanctuary designed for depth.</p>
+              <p className="text-sm font-black text-neutral-500 leading-relaxed">Zenith silences the modern noise. Your data is synced securely.</p>
             </div>
           </div>
           <button onClick={() => setStep(2)} className="w-full py-6 bg-black text-white rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl">Start Customization <ChevronRight size={16} /></button>
@@ -463,7 +464,7 @@ const OnboardingFlow: React.FC<{ onComplete: (profile: UserProfile) => void }> =
   }
 
   return (
-    <div className="fixed inset-0 z-[500] bg-white flex flex-col items-center justify-center p-8 animate-in slide-in-from-right-8 duration-500 overflow-y-auto">
+    <div className="fixed inset-0 z-[500] bg-white flex flex-col items-center justify-center p-8 animate-in slide-in-from-right-8 duration-500 overflow-y-auto font-black">
       <div className="max-w-md w-full space-y-12 my-auto">
         <div className="space-y-4">
           <div className="w-16 h-16 bg-neutral-900 rounded-3xl flex items-center justify-center text-white mb-8"><UserCircle size={32} /></div>
@@ -512,7 +513,7 @@ const ZenithCheckbox: React.FC<{ id: string; label: string; checked?: boolean; o
         </div>
         <div className="success-ripple"></div>
       </div>
-      <span className="checkbox-text truncate">{label}</span>
+      <span className="checkbox-text truncate font-black tracking-tighter">{label}</span>
     </label>
   </div>
 );
@@ -522,6 +523,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
 
   const mainScrollRef = useRef<HTMLElement>(null);
 
@@ -531,77 +533,59 @@ const App: React.FC = () => {
   
   const [tasks, setTasks] = useState<Task[]>([]);
   const [priorities, setPriorities] = useState<PriorityItem[]>([]);
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [goals, setGoals] = useState<Goal[]>([]);
   const [activePriorityTab, setActivePriorityTab] = useState<PriorityCategory>('Work');
   const [notes, setNotes] = useState<any[]>([]);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   
+  // Planner State - Default to Today in Local Time
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayStr());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskReminder, setNewTaskReminder] = useState(false);
+
   const [newPriorityInputs, setNewPriorityInputs] = useState<Record<string, string>>({});
   const [priorityAddingTo, setPriorityAddingTo] = useState<PrioritySubCategory | null>(null);
   const [newNote, setNewNote] = useState({ title: '', content: '' });
-  const [newHabitTitle, setNewHabitTitle] = useState('');
-  const [newGoalText, setNewGoalText] = useState('');
+  const [focusJournal, setFocusJournal] = useState('');
 
   const [feedbackEmail, setFeedbackEmail] = useState('');
   const [feedbackText, setFeedbackText] = useState('');
   const [isSendingFeedback, setIsSendingFeedback] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
 
-  // Auth Listener & Data Fetcher
   useEffect(() => {
     const initializeAuth = async () => {
-      try {
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          await supabase.auth.signOut();
-          setSession(null);
-          setIsAuthenticated(false);
-          return;
-        }
-
-        setSession(currentSession);
-        setIsAuthenticated(!!currentSession);
-        if (currentSession) {
-          fetchProfile(currentSession.user.id);
-          fetchUserData(currentSession.user.id);
-        }
-      } catch (err) {
-        console.error("Auth init failed:", err);
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      setSession(currentSession);
+      setIsAuthenticated(!!currentSession);
+      if (currentSession) {
+        fetchProfile(currentSession.user.id);
+        fetchUserData(currentSession.user.id);
+      } else {
+        setIsProfileLoading(false);
       }
     };
-
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-      if (event === 'SIGNED_OUT') {
-        setUserProfile(null);
-        setTasks([]);
-        setPriorities([]);
-        setHabits([]);
-        setGoals([]);
-        setNotes([]);
-        setSession(null);
-        setIsAuthenticated(false);
-        setActiveSection('clarity');
-        setShowSettings(false);
-      } else if (newSession) {
-        setSession(newSession);
-        setIsAuthenticated(true);
+      setSession(newSession);
+      setIsAuthenticated(!!newSession);
+      if (newSession) {
         fetchProfile(newSession.user.id);
         fetchUserData(newSession.user.id);
+      } else {
+        setIsProfileLoading(false);
+        setUserProfile(null);
       }
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    setIsProfileLoading(true);
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (data) {
       setUserProfile({
         name: data.name,
@@ -611,31 +595,48 @@ const App: React.FC = () => {
         email: session?.user?.email
       });
     }
+    setIsProfileLoading(false);
   };
 
   const fetchUserData = async (userId: string) => {
-    const [t, p, n, h, g] = await Promise.all([
+    const [t, p, n] = await Promise.all([
       supabase.from('tasks').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from('priorities').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
       supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
-      supabase.from('habits').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
-      supabase.from('goals').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     ]);
     if (t.data) setTasks(t.data);
     if (p.data) setPriorities(p.data);
     if (n.data) setNotes(n.data);
-    if (h.data) setHabits(h.data);
-    if (g.data) setGoals(g.data);
   };
 
   const handleAddTask = async () => {
     if (!newTaskTitle.trim() || !session) return;
-    const { data } = await supabase.from('tasks').insert({
+    
+    // Explicit Payload
+    const payload = {
       user_id: session.user.id,
       title: newTaskTitle,
-      remind: newTaskReminder
-    }).select().single();
-    if (data) setTasks([data, ...tasks]);
+      remind: newTaskReminder,
+      date: selectedDate, 
+      category: 'Work',
+      priority: 'Medium',
+      status: 'todo'
+    };
+
+    const { data, error } = await supabase.from('tasks').insert(payload).select().single();
+    
+    if (error) {
+      console.error("Task Insert Error:", error.message);
+      // Fallback: If DB insertion fails, still show in UI for this session
+      const mockTask: Task = {
+        id: Math.random().toString(36).substr(2, 9),
+        ...payload
+      } as Task;
+      setTasks([mockTask, ...tasks]);
+    } else if (data) {
+      setTasks([data, ...tasks]);
+    }
+    
     setNewTaskTitle('');
     setNewTaskReminder(false);
   };
@@ -651,6 +652,23 @@ const App: React.FC = () => {
   const deleteTask = async (id: string) => {
     setTasks(tasks.filter(t => t.id !== id));
     await supabase.from('tasks').delete().eq('id', id);
+  };
+
+  const handleUpdateTask = async (updated: Task) => {
+    setTasks(tasks.map(t => t.id === updated.id ? updated : t));
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        title: updated.title,
+        date: updated.date,
+        remind: updated.remind,
+        category: updated.category,
+        priority: updated.priority,
+        status: updated.status
+      })
+      .eq('id', updated.id);
+    if (error) console.error(error.message);
+    setEditingTask(null);
   };
 
   const addPriority = async (category: PriorityCategory, subCategory: PrioritySubCategory) => {
@@ -680,89 +698,40 @@ const App: React.FC = () => {
     await supabase.from('priorities').delete().eq('id', id);
   };
 
-  const addHabit = async () => {
-    if (!newHabitTitle.trim() || !session) return;
-    const { data } = await supabase.from('habits').insert({
-      user_id: session.user.id,
-      title: newHabitTitle,
-      streak: 0,
-      completed_today: false
-    }).select().single();
-    if (data) setHabits([data, ...habits]);
-    setNewHabitTitle('');
+  const navigate = (id: Section) => {
+    setActiveSection(id);
+    setIsSidebarOpen(false);
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const toggleHabit = async (id: string) => {
-    const habit = habits.find(h => h.id === id);
-    if (!habit) return;
-    const newStatus = !habit.completed_today;
+  // Calendar Helpers
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+  const calendarDays = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const days = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    const result = [];
     
-    // Accurate streak calculation:
-    // If marking as complete, increment. 
-    // If unmarking (not completed), reset the streak to 0.
-    const newStreak = newStatus ? habit.streak + 1 : 0;
-    
-    setHabits(habits.map(h => h.id === id ? { ...h, completed_today: newStatus, streak: newStreak } : h));
-    await supabase.from('habits').update({ completed_today: newStatus, streak: newStreak }).eq('id', id);
-  };
-
-  const deleteHabit = async (id: string) => {
-    setHabits(habits.filter(h => h.id !== id));
-    await supabase.from('habits').delete().eq('id', id);
-  };
-
-  const addGoal = async () => {
-    if (!newGoalText.trim() || !session) return;
-    const { data } = await supabase.from('goals').insert({
-      user_id: session.user.id,
-      text: newGoalText,
-      completed: false
-    }).select().single();
-    if (data) setGoals([data, ...goals]);
-    setNewGoalText('');
-  };
-
-  const toggleGoal = async (id: string) => {
-    const goal = goals.find(g => g.id === id);
-    if (!goal) return;
-    const newCompleted = !goal.completed;
-    setGoals(goals.map(g => g.id === id ? { ...g, completed: newCompleted } : g));
-    await supabase.from('goals').update({ completed: newCompleted }).eq('id', id);
-  };
-
-  const deleteGoal = async (id: string) => {
-    setGoals(goals.filter(g => g.id !== id));
-    await supabase.from('goals').delete().eq('id', id);
-  };
-
-  const addNote = async () => {
-    if ((!newNote.title && !newNote.content) || !session) return;
-    const { data } = await supabase.from('notes').insert({
-      user_id: session.user.id,
-      title: newNote.title || 'Untitled',
-      content: newNote.content,
-      date_label: 'Today'
-    }).select().single();
-    if (data) setNotes([data, ...notes]);
-    setNewNote({ title: '', content: '' });
-  };
-
-  const deleteNote = async (id: string) => {
-    setNotes(notes.filter(n => n.id !== id));
-    await supabase.from('notes').delete().eq('id', id);
-  };
-
-  useEffect(() => {
-    if (mainScrollRef.current) {
-      mainScrollRef.current.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+    // Fill leading empty days
+    for (let i = 0; i < firstDay; i++) result.push(null);
+    // Fill actual days
+    for (let d = 1; d <= days; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      result.push({ day: d, date: dateStr });
     }
-  }, [activeSection]);
+    return result;
+  }, [currentMonth]);
+
+  const changeMonth = (offset: number) => {
+    const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1);
+    setCurrentMonth(newDate);
+  };
 
   const SidebarContent = () => (
-    <div className="flex flex-col min-h-full p-8 pb-12">
+    <div className="flex flex-col min-h-full p-8 pb-12 font-black">
       <div className="flex items-center gap-4 mb-16 px-4 shrink-0">
         <div className="p-3 bg-black rounded-2xl shadow-xl"><Brain size={24} className="text-white" /></div>
         <span className="text-2xl font-black tracking-tighter uppercase text-neutral-900">Zenith</span>
@@ -771,382 +740,527 @@ const App: React.FC = () => {
         {[
           { id: 'clarity', label: 'Clarity', icon: Home },
           { id: 'priorities', label: 'Focus', icon: Target },
-          { id: 'habits', label: 'Rituals', icon: Activity },
           { id: 'planner', label: 'Planner', icon: ListTodo },
           { id: 'notes', label: 'Notes', icon: StickyNote },
-          { id: 'goals', label: 'Aspirations', icon: Flag },
           { id: 'about', label: 'About', icon: Info },
+          { id: 'feedback', label: 'Feedback', icon: MessageSquare },
         ].map((item) => (
           <button key={item.id} onClick={() => navigate(item.id as Section)} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${activeSection === item.id ? 'bg-black text-white shadow-xl scale-[1.02]' : 'text-neutral-400 hover:text-black hover:bg-neutral-50'}`}>
-            <item.icon size={22} strokeWidth={activeSection === item.id ? 3 : 2} /><span className="text-sm font-black uppercase tracking-widest">{item.label}</span>
+            <item.icon size={22} strokeWidth={activeSection === item.id ? 4 : 3} /><span className="text-sm font-black uppercase tracking-widest">{item.label}</span>
           </button>
         ))}
+        <button onClick={() => { setShowSettings(true); setIsSidebarOpen(false); }} className="w-full flex items-center gap-4 px-6 py-4 text-neutral-400 hover:text-black transition-all hover:bg-neutral-50 rounded-2xl">
+          <SlidersHorizontal size={22} strokeWidth={3} /><span className="text-sm font-black uppercase tracking-widest">Settings</span>
+        </button>
       </nav>
-      <div className="mt-8 space-y-4 pt-6 border-t border-neutral-100 shrink-0">
-        <button onClick={() => navigate('feedback')} className={`w-full flex items-center gap-4 px-6 py-4 transition-all rounded-2xl ${activeSection === 'feedback' ? 'bg-black text-white' : 'text-neutral-400 hover:text-black hover:bg-neutral-50'}`}><MessageSquare size={20} /><span className="text-xs font-black uppercase tracking-widest">Feedback</span></button>
-        <button onClick={() => { setShowSettings(true); setIsSidebarOpen(false); }} className="w-full flex items-center gap-4 px-6 py-4 text-neutral-400 hover:text-black transition-all hover:bg-neutral-50 rounded-2xl"><SlidersHorizontal size={20} /><span className="text-xs font-black uppercase tracking-widest">Settings</span></button>
+      <div className="mt-8 pt-6 border-t border-neutral-100 font-black">
+         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-200 text-center">Protocol V1.4</p>
       </div>
     </div>
   );
 
-  const navigate = (id: Section) => { setActiveSection(id); setIsSidebarOpen(false); };
+  if (!isReady) return <SplashScreen onComplete={() => setIsReady(true)} />;
+  if (!isAuthenticated) return <AuthPage onAuthSuccess={() => {}} />;
+  
+  if (isProfileLoading) {
+    return (
+      <div className="fixed inset-0 z-[1000] bg-white flex items-center justify-center font-black">
+        <div className="flex flex-col items-center gap-6">
+           <Loader2 className="w-12 h-12 animate-spin text-black" />
+           <p className="text-[10px] font-black uppercase tracking-[0.5em] animate-pulse">Establishing Presence</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
+  if (userProfile && !userProfile.completedOnboarding) return <OnboardingFlow onComplete={(p) => setUserProfile(p)} />;
 
   return (
-    <>
-      <SplashScreen onComplete={() => setIsReady(true)} />
-      <div className={`fixed inset-0 transition-all duration-1000 ${isReady ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        {!isAuthenticated ? (
-          <AuthPage onAuthSuccess={() => {}} />
-        ) : !userProfile?.completedOnboarding ? (
-          <OnboardingFlow onComplete={(p) => setUserProfile(p)} />
-        ) : (
-          <div className={`h-screen flex flex-col lg:flex-row ${lowStimMode ? 'low-stim bg-[#f0f0f0]' : 'bg-[#fbfbfb]'} relative overflow-hidden`}>
-            <div className="grain-overlay opacity-[0.02]"></div>
-            <aside className="hidden lg:block w-80 h-full bg-white border-r border-neutral-100 shrink-0 shadow-sm overflow-y-auto no-scrollbar"><SidebarContent /></aside>
-            <div className={`lg:hidden fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsSidebarOpen(false)}>
-              <aside className={`absolute left-0 top-0 h-full w-72 bg-white backdrop-blur-2xl transition-transform duration-500 border-r border-neutral-100 overflow-y-auto no-scrollbar ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`} onClick={e => e.stopPropagation()}><SidebarContent /></aside>
-            </div>
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
-              <header className="lg:hidden px-6 py-4 flex items-center justify-between z-40 bg-white/80 backdrop-blur-md border-b border-neutral-50 shrink-0">
-                <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-white border border-neutral-100 rounded-2xl shadow-sm active:scale-90 flex items-center gap-2"><Menu size={20} /></button>
-                <div className="flex items-center gap-2"><Brain size={20} className="text-black" /><span className="text-sm font-black tracking-tighter uppercase">Zenith</span></div>
-                <div className="w-10"></div>
-              </header>
+    <div className={`h-screen flex flex-col lg:flex-row ${lowStimMode ? 'low-stim bg-[#f0f0f0]' : 'bg-[#fbfbfb]'} relative overflow-hidden font-sans selection:bg-black selection:text-white font-black`}>
+      <div className="grain-overlay opacity-[0.02]"></div>
+      
+      <aside className="hidden lg:block w-80 h-full bg-white border-r border-neutral-100 shrink-0 shadow-sm overflow-y-auto no-scrollbar">
+        <SidebarContent />
+      </aside>
 
-              {showSettings && (
-                <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in">
-                  <div className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl animate-in slide-in-from-bottom-10 max-h-[90vh] overflow-y-auto no-scrollbar">
-                    <div className="flex items-center justify-between mb-8">
-                      <h3 className="text-2xl font-black tracking-tighter">Portal Options</h3>
-                      <button onClick={() => setShowSettings(false)} className="hover:rotate-90 transition-transform p-1"><X size={24} /></button>
+      <div className={`lg:hidden fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsSidebarOpen(false)}>
+        <aside className={`absolute left-0 top-0 h-full w-72 bg-white backdrop-blur-2xl transition-transform duration-500 border-r border-neutral-100 overflow-y-auto no-scrollbar ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`} onClick={e => e.stopPropagation()}>
+          <SidebarContent />
+        </aside>
+      </div>
+
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <header className="lg:hidden px-6 py-4 flex items-center justify-between z-40 bg-white/80 backdrop-blur-md border-b border-neutral-50 shrink-0 font-black">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-white border border-neutral-100 rounded-2xl shadow-sm active:scale-90 flex items-center gap-2 font-black"><Menu size={20} /></button>
+          <div className="flex items-center gap-2 font-black"><Brain size={20} className="text-black" /><span className="text-sm font-black tracking-tighter uppercase">Zenith</span></div>
+          <div className="w-10"></div>
+        </header>
+
+        {showSettings && (
+          <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in font-black">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl animate-in slide-in-from-bottom-10 max-h-[90vh] overflow-y-auto no-scrollbar">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-black tracking-tighter">Portal Options</h3>
+                <button onClick={() => setShowSettings(false)} className="hover:rotate-90 transition-transform p-1"><X size={24} /></button>
+              </div>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-300 ml-1">Focus Identity</p>
+                  <div className="flex items-center gap-4 p-5 bg-neutral-900 text-white rounded-[1.5rem] shadow-lg">
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-black"><User size={20} className="text-white/60" /></div>
+                    <div className="flex-1 overflow-hidden font-black">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-0.5">Focus Name</p>
+                      <p className="text-sm font-black truncate tracking-tight">{userProfile?.name || 'Anonymous'}</p>
                     </div>
-                    <div className="space-y-6">
-                      <div className="space-y-3">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-300 ml-1">Focus Identity</p>
-                        <div className="flex items-center gap-4 p-5 bg-neutral-900 text-white rounded-[1.5rem] shadow-lg">
-                          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"><User size={20} className="text-white/60" /></div>
-                          <div className="flex-1 overflow-hidden">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-0.5">Focus Name</p>
-                            <p className="text-sm font-bold truncate tracking-tight">{userProfile?.name || ''}</p>
-                          </div>
-                          <ShieldCheck size={18} className="text-emerald-400" />
-                        </div>
-                      </div>
-                      <div className="w-full h-px bg-neutral-100"></div>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-5 bg-neutral-50 rounded-2xl border border-neutral-100">
-                          <span className="text-xs font-black uppercase tracking-widest">Low-Stim Mode</span>
-                          <button onClick={() => setLowStimMode(!lowStimMode)} className={`w-12 h-7 rounded-full relative transition-all ${lowStimMode ? 'bg-black' : 'bg-neutral-200'}`}><div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${lowStimMode ? 'left-6' : 'left-1'}`} /></button>
-                        </div>
-                        <button onClick={handleLogout} className="w-full flex items-center gap-4 p-5 bg-neutral-50 rounded-2xl border border-neutral-100 text-neutral-600 hover:bg-neutral-100 transition-colors"><LogOut size={20} /><span className="text-xs font-black uppercase tracking-widest">Exit Portal</span></button>
-                      </div>
-                    </div>
-                    <button onClick={() => setShowSettings(false)} className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] mt-8 hover:bg-neutral-800 transition-colors shadow-xl">Resume Focus</button>
+                    <ShieldCheck size={18} className="text-emerald-400" />
                   </div>
                 </div>
-              )}
+                <div className="w-full h-px bg-neutral-100"></div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-5 bg-neutral-50 rounded-2xl border border-neutral-100 font-black">
+                    <span className="text-xs font-black uppercase tracking-widest">Low-Stim Mode</span>
+                    <button onClick={() => setLowStimMode(!lowStimMode)} className={`w-12 h-7 rounded-full relative transition-all ${lowStimMode ? 'bg-black' : 'bg-neutral-200'}`}><div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${lowStimMode ? 'left-6' : 'left-1'}`} /></button>
+                  </div>
+                  <button onClick={() => supabase.auth.signOut()} className="w-full flex items-center gap-4 p-5 bg-neutral-50 rounded-2xl border border-neutral-100 text-neutral-600 hover:bg-neutral-100 transition-colors font-black"><LogOut size={20} /><span className="text-xs font-black uppercase tracking-widest">Exit Portal</span></button>
+                </div>
+              </div>
+              <button onClick={() => setShowSettings(false)} className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] mt-8 hover:bg-neutral-800 transition-colors shadow-xl">Resume Focus</button>
+            </div>
+          </div>
+        )}
 
-              <main 
-                ref={mainScrollRef} 
-                className="flex-1 overflow-y-auto px-6 lg:px-12 py-8 lg:py-16 w-full scrolling-touch scroll-container no-scrollbar lg:scrollbar-default"
-              >
-                <div className="max-w-7xl mx-auto pb-32 lg:pb-16">
-                  {activeSection === 'clarity' && (
-                    <div className="space-y-8 lg:space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-                      <div className="flex flex-col gap-1">
-                        <h1 className="text-4xl lg:text-6xl font-black tracking-tighter text-neutral-900 leading-tight">Hi, {userProfile?.name.split(' ')[0] || 'Zenith User'}.</h1>
-                        <p className="text-xs lg:text-lg font-medium text-neutral-400 italic">Welcome back to your sanctuary.</p>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 items-stretch">
-                        <Pomodoro />
-                        <Clock />
-                      </div>
+        {editingTask && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in font-black">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 duration-300">
+               <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-3xl font-black tracking-tighter">Edit Intention</h3>
+                  <button onClick={() => setEditingTask(null)} className="hover:rotate-90 transition-transform p-1"><X size={24} /></button>
+               </div>
+               
+               <div className="space-y-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">Title</label>
+                    <input 
+                      type="text" 
+                      value={editingTask.title} 
+                      onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
+                      className="w-full bg-neutral-50 rounded-2xl py-4 px-6 font-black outline-none border-2 border-transparent focus:border-black transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">Bind Date</label>
+                      <input 
+                        type="date" 
+                        value={editingTask.date} 
+                        onChange={(e) => setEditingTask({...editingTask, date: e.target.value})}
+                        className="w-full bg-neutral-50 rounded-2xl py-4 px-6 font-black outline-none border-2 border-transparent focus:border-black transition-all"
+                      />
                     </div>
-                  )}
-
-                  {activeSection === 'priorities' && (
-                    <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-5xl">
-                      <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Focus.</h1>
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div className="lg:col-span-1 space-y-6">
-                          <ConcentricVisualizer priorities={priorities} />
-                          <PriorityProgressCircle items={priorities.filter(p => p.category === activePriorityTab)} title={activePriorityTab} />
-                        </div>
-                        <div className="lg:col-span-2 space-y-6">
-                          <div className="flex p-1 bg-neutral-100 rounded-2xl">{(['Work', 'Project', 'Private'] as PriorityCategory[]).map(cat => (<button key={cat} onClick={() => setActivePriorityTab(cat)} className={`flex-1 py-3 text-[10px] lg:text-xs font-black uppercase tracking-widest rounded-xl transition-all ${activePriorityTab === cat ? 'bg-white text-black shadow-sm' : 'text-neutral-400 hover:text-neutral-600'}`}>{cat}</button>))}</div>
-                          <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
-                            {(['Must Do', 'Should Do', 'Backlog'] as PrioritySubCategory[]).map(sub => (
-                              <div key={sub} className="space-y-2">
-                                <div className="flex items-center justify-between mb-2"><h3 className="text-[10px] lg:text-xs font-black text-neutral-300 uppercase tracking-widest">{sub}</h3><button onClick={() => setPriorityAddingTo(sub)} className="text-neutral-200 hover:text-black transition-colors"><Plus size={18} /></button></div>
-                                {priorityAddingTo === sub && <input autoFocus type="text" placeholder="..." className="w-full bg-neutral-50 border-b border-black py-3 px-1 text-sm font-bold outline-none mb-4" value={newPriorityInputs[`${activePriorityTab}-${sub}`] || ''} onChange={(e) => setNewPriorityInputs({...newPriorityInputs, [`${activePriorityTab}-${sub}`]: e.target.value})} onKeyDown={(e) => { if(e.key === 'Enter') addPriority(activePriorityTab, sub); if(e.key === 'Escape') setPriorityAddingTo(null); }} />}
-                                <div className="space-y-1">{priorities.filter(p => p.category === activePriorityTab && p.sub_category === sub).map(item => (<div key={item.id} className="flex items-center justify-between group py-1.5 transition-all"><ZenithCheckbox id={item.id} label={item.text} checked={item.completed} onChange={() => togglePriority(item.id)} /><button onClick={() => deletePriority(item.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={16} /></button></div>))}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">Category</label>
+                      <select 
+                        value={editingTask.category} 
+                        onChange={(e) => setEditingTask({...editingTask, category: e.target.value as any})}
+                        className="w-full bg-neutral-50 rounded-2xl py-4 px-6 font-black outline-none border-2 border-transparent focus:border-black transition-all appearance-none"
+                      >
+                        <option value="Work">Work</option>
+                        <option value="Project">Project</option>
+                        <option value="Private">Private</option>
+                      </select>
                     </div>
-                  )}
+                  </div>
 
-                  {activeSection === 'habits' && (
-                    <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-5xl">
-                      <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Rituals.</h1>
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div className="lg:col-span-1">
-                          <div className="bg-black p-8 rounded-[2.5rem] text-white shadow-2xl flex flex-col items-center justify-center text-center">
-                            <Flame size={48} className="text-orange-500 mb-4" />
-                            <h3 className="text-xl font-black mb-2 uppercase tracking-tighter">Consistency</h3>
-                            <p className="text-[10px] text-white/50 uppercase tracking-widest leading-relaxed">Daily routines form the architecture of a focused life.</p>
-                          </div>
-                        </div>
-                        <div className="lg:col-span-2 space-y-6">
-                          <div className="relative flex items-center gap-2">
-                            <input type="text" value={newHabitTitle} onChange={(e) => setNewHabitTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addHabit()} placeholder="New ritual..." className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl py-6 pl-8 pr-16 text-sm font-black outline-none focus:border-black transition-all" />
-                            <button onClick={addHabit} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black text-white rounded-xl shadow-lg hover:bg-neutral-800 transition-all"><Plus size={20} /></button>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {habits.map(habit => (
-                              <div key={habit.id} className="bg-white border border-neutral-100 rounded-[2rem] p-6 shadow-sm group hover:border-neutral-300 transition-all relative">
-                                <div className="flex items-center justify-between mb-4">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <Flame size={14} className={habit.streak > 0 ? "text-orange-500" : "text-neutral-200"} />
-                                    <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{habit.streak} Day Streak</span>
-                                    {habit.streak >= 7 && (
-                                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-amber-100 bg-amber-50 animate-in zoom-in slide-in-from-left-2 duration-700">
-                                        <Sparkles size={10} className="text-amber-500" />
-                                        <span className="text-[8px] font-black tracking-widest uppercase text-amber-700">Zenith 7+</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <button onClick={() => deleteHabit(habit.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={16} /></button>
+                  <div className="flex items-center justify-between p-5 bg-neutral-50 rounded-2xl border border-neutral-100 font-black">
+                    <div className="flex items-center gap-3">
+                      <Bell size={18} className={editingTask.remind ? 'text-black' : 'text-neutral-300'} />
+                      <span className="text-xs font-black uppercase tracking-widest">Active Reminder</span>
+                    </div>
+                    <button 
+                      onClick={() => setEditingTask({...editingTask, remind: !editingTask.remind})} 
+                      className={`w-12 h-7 rounded-full relative transition-all ${editingTask.remind ? 'bg-black' : 'bg-neutral-200'}`}
+                    >
+                      <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${editingTask.remind ? 'left-6' : 'left-1'}`} />
+                    </button>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4 mt-10">
+                  <button onClick={() => setEditingTask(null)} className="py-5 bg-neutral-100 text-neutral-600 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-neutral-200 transition-colors">Discard</button>
+                  <button onClick={() => handleUpdateTask(editingTask)} className="py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-neutral-800 transition-colors shadow-xl">Apply Changes</button>
+               </div>
+            </div>
+          </div>
+        )}
+
+        <main ref={mainScrollRef} className="flex-1 overflow-y-auto px-6 lg:px-12 py-8 lg:py-16 w-full scrolling-touch scroll-container no-scrollbar lg:scrollbar-default font-black">
+          <div className="max-w-7xl mx-auto pb-32 lg:pb-16 font-black">
+            {activeSection === 'clarity' && (
+              <div className="space-y-8 lg:space-y-12 animate-in slide-in-from-bottom-4 duration-700 font-black">
+                <div className="flex flex-col gap-1 font-black">
+                  <h1 className="text-4xl lg:text-7xl font-black tracking-tighter text-neutral-900 leading-tight">Hi, {userProfile?.name.split(' ')[0] || 'Zenith User'}.</h1>
+                  <p className="text-xs lg:text-lg font-black text-neutral-400 italic">Welcome back to your sanctuary.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 items-stretch font-black">
+                  <Pomodoro />
+                  <Clock />
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'priorities' && (
+              <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-6xl font-black">
+                <h1 className="text-4xl lg:text-7xl font-black tracking-tighter">Focus.</h1>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 font-black">
+                  <div className="lg:col-span-4 space-y-6 font-black">
+                    <ConcentricVisualizer priorities={priorities} />
+                    <PriorityProgressCircle items={priorities.filter(p => p.category === activePriorityTab)} title={activePriorityTab} />
+                  </div>
+                  <div className="lg:col-span-8 space-y-8 font-black">
+                    <div className="flex p-1 bg-neutral-100 rounded-2xl font-black">{(['Work', 'Project', 'Private'] as PriorityCategory[]).map(cat => (<button key={cat} onClick={() => setActivePriorityTab(cat)} className={`flex-1 py-3 text-[10px] lg:text-xs font-black uppercase tracking-widest rounded-xl transition-all ${activePriorityTab === cat ? 'bg-white text-black shadow-sm' : 'text-neutral-400 hover:text-neutral-600'}`}>{cat}</button>))}</div>
+                    <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 shadow-sm space-y-8 font-black">
+                       {(['Must Do', 'Should Do', 'Backlog'] as PrioritySubCategory[]).map(sub => (
+                          <div key={sub} className="space-y-2 font-black">
+                            <div className="flex items-center justify-between mb-2 font-black">
+                              <h3 className="text-[10px] lg:text-xs font-black text-neutral-300 uppercase tracking-widest">{sub}</h3>
+                              <button onClick={() => setPriorityAddingTo(sub)} className="text-neutral-200 hover:text-black transition-colors font-black"><Plus size={18} /></button>
+                            </div>
+                            {priorityAddingTo === sub && <input autoFocus type="text" placeholder="..." className="w-full bg-neutral-50 border-b-2 border-black py-3 px-1 text-sm font-black outline-none mb-4" value={newPriorityInputs[`${activePriorityTab}-${sub}`] || ''} onChange={(e) => setNewPriorityInputs({...newPriorityInputs, [`${activePriorityTab}-${sub}`]: e.target.value})} onKeyDown={(e) => { if(e.key === 'Enter') addPriority(activePriorityTab, sub); if(e.key === 'Escape') setPriorityAddingTo(null); }} />}
+                            <div className="space-y-1 font-black">
+                              {priorities.filter(p => p.category === activePriorityTab && p.sub_category === sub).map(item => (
+                                <div key={item.id} className="flex items-center justify-between group py-1.5 transition-all font-black">
+                                  <ZenithCheckbox id={item.id} label={item.text} checked={item.completed} onChange={() => togglePriority(item.id)} />
+                                  <button onClick={() => deletePriority(item.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90 font-black"><Trash2 size={16} /></button>
                                 </div>
-                                <ZenithCheckbox id={habit.id} label={habit.title} checked={habit.completed_today} onChange={() => toggleHabit(habit.id)} />
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        ))}
+                    </div>
+
+                    <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 shadow-sm space-y-6 relative group font-black">
+                      <div className="flex items-center justify-between font-black">
+                        <h3 className="text-[10px] lg:text-xs font-black text-neutral-300 uppercase tracking-widest">Deep Focus Script</h3>
+                        <button 
+                          onClick={() => setFocusJournal('')}
+                          className="p-2 text-neutral-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all font-black"
+                          title="Clear writing"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <textarea 
+                        className="w-full min-h-[160px] bg-neutral-50 rounded-2xl p-6 text-sm font-black text-neutral-800 outline-none focus:ring-1 focus:ring-neutral-200 resize-none transition-all placeholder:text-neutral-300 font-black"
+                        placeholder="Log your deep work observations or current blockers here..."
+                        value={focusJournal}
+                        onChange={(e) => setFocusJournal(e.target.value)}
+                      />
+                      <div className="flex items-center justify-end gap-2 font-black">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-neutral-300">Autosaved Local Cache</span>
                       </div>
                     </div>
-                  )}
+                  </div>
+                </div>
+              </div>
+            )}
 
-                  {activeSection === 'planner' && (
-                    <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-5xl mx-auto">
-                      <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Plan.</h1>
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div className="lg:col-span-1"><TaskProgressCircle tasks={tasks} /></div>
-                        <div className="lg:col-span-2 space-y-8">
-                          <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-                            <div className="relative flex items-center gap-2">
-                              <input type="text" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddTask()} placeholder="Next intention..." className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl py-6 pl-8 pr-32 text-sm lg:text-base font-black outline-none focus:border-black transition-all" />
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                <button onClick={() => setNewTaskReminder(!newTaskReminder)} className={`p-3 rounded-xl transition-all ${newTaskReminder ? 'bg-neutral-900 text-white shadow-lg' : 'text-neutral-300 hover:text-neutral-500'}`}>{newTaskReminder ? <Bell size={20} /> : <BellOff size={20} />}</button>
-                                <button onClick={handleAddTask} className="p-3 bg-black text-white rounded-xl shadow-lg hover:bg-neutral-800 transition-all"><Plus size={20} /></button>
+            {activeSection === 'planner' && (
+              <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-6xl mx-auto font-black">
+                <h1 className="text-4xl lg:text-7xl font-black tracking-tighter">Plan.</h1>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 font-black">
+                  <div className="lg:col-span-5 space-y-8 font-black">
+                    <TaskProgressCircle tasks={tasks.filter(t => t.date && t.date.startsWith(selectedDate))} />
+                    
+                    <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 shadow-sm space-y-6 font-black">
+                      <div className="flex items-center justify-between mb-4 font-black">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-neutral-900">
+                          {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        </h3>
+                        <div className="flex items-center gap-1 font-black">
+                          <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-neutral-50 rounded-xl transition-all font-black"><ChevronLeft size={18}/></button>
+                          <button onClick={() => changeMonth(1)} className="p-2 hover:bg-neutral-50 rounded-xl transition-all rotate-180 font-black"><ChevronLeft size={18}/></button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-7 gap-1 font-black">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                          <div key={d} className="text-center text-[10px] font-black text-neutral-300 py-2">{d}</div>
+                        ))}
+                        {calendarDays.map((d, i) => {
+                          if (!d) return <div key={`empty-${i}`} className="p-3 font-black" />;
+                          const isSelected = selectedDate === d.date;
+                          const hasTasks = tasks.some(t => t.date && t.date.startsWith(d.date));
+                          const isToday = d.date === getTodayStr();
+                          
+                          return (
+                            <button 
+                              key={d.date}
+                              onClick={() => setSelectedDate(d.date)}
+                              className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all aspect-square font-black ${isSelected ? 'bg-black text-white shadow-xl scale-110' : 'hover:bg-neutral-50 text-neutral-900'}`}
+                            >
+                              <span className={`text-[11px] font-black ${isToday && !isSelected ? 'underline decoration-2' : ''}`}>{d.day}</span>
+                              {hasTasks && !isSelected && (
+                                <div className="absolute bottom-1.5 w-1.5 h-1.5 bg-black rounded-full" />
+                              )}
+                              {hasTasks && isSelected && (
+                                <div className="absolute bottom-1.5 w-1.5 h-1.5 bg-white rounded-full" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-7 space-y-8 font-black">
+                    <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 lg:p-10 shadow-sm space-y-8 min-h-[500px] font-black">
+                      <div className="flex flex-col gap-2 font-black">
+                        <h2 className="text-2xl font-black tracking-tighter">
+                          {new Date(selectedDate).toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })}
+                        </h2>
+                        <div className="h-1 w-12 bg-black rounded-full font-black" />
+                      </div>
+
+                      <div className="relative flex items-center gap-2 font-black">
+                        <input 
+                          type="text" 
+                          value={newTaskTitle} 
+                          onChange={(e) => setNewTaskTitle(e.target.value)} 
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddTask()} 
+                          placeholder="Bind new intention..." 
+                          className="w-full bg-neutral-50 border-2 border-neutral-100 rounded-2xl py-6 pl-8 pr-32 text-sm lg:text-base font-black outline-none focus:border-black transition-all" 
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 font-black">
+                          <button onClick={() => setNewTaskReminder(!newTaskReminder)} className={`p-3 rounded-xl transition-all font-black ${newTaskReminder ? 'bg-neutral-900 text-white shadow-lg' : 'text-neutral-300 hover:text-neutral-500'}`}>{newTaskReminder ? <Bell size={20} /> : <BellOff size={20} />}</button>
+                          <button onClick={handleAddTask} className="p-3 bg-black text-white rounded-xl shadow-lg hover:bg-neutral-800 transition-all font-black"><Plus size={20} /></button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 overflow-y-auto no-scrollbar max-h-[400px] font-black">
+                        {tasks.filter(t => t.date && t.date.startsWith(selectedDate)).length > 0 ? (
+                          tasks.filter(t => t.date && t.date.startsWith(selectedDate)).map(task => (
+                            <div key={task.id} className="flex items-center justify-between group py-3 border-b border-neutral-50 last:border-0 hover:bg-neutral-50/50 rounded-xl transition-all font-black">
+                              <div className="flex items-center gap-3 flex-1 font-black">
+                                <ZenithCheckbox id={task.id} label={task.title} checked={task.status === 'done'} onChange={() => toggleTask(task.id)} />
+                                {task.remind && task.status !== 'done' && <Bell size={14} className="text-neutral-300" />}
+                                <span className="text-[9px] font-black uppercase text-neutral-300 tracking-tighter px-2 py-0.5 bg-neutral-100 rounded-md">{task.category}</span>
+                              </div>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all font-black">
+                                <button 
+                                  onClick={() => setEditingTask(task)} 
+                                  className="p-2 text-neutral-300 hover:text-black hover:bg-neutral-100 rounded-xl active:scale-90 transition-all font-black"
+                                >
+                                  <Edit2 size={16} />
+                                </button>
+                                <button 
+                                  onClick={() => deleteTask(task.id)} 
+                                  className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl active:scale-90 transition-all font-black"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
                               </div>
                             </div>
-                            <div className="space-y-2">{tasks.map(task => (<div key={task.id} className="flex items-center justify-between group py-3 border-b border-neutral-50 last:border-0 hover:bg-neutral-50/50 rounded-xl transition-all"><div className="flex items-center gap-3 flex-1"><ZenithCheckbox id={task.id} label={task.title} checked={task.status === 'done'} onChange={() => toggleTask(task.id)} />{task.remind && task.status !== 'done' && <Bell size={14} className="text-neutral-300" />}</div><button onClick={() => deleteTask(task.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={16} /></button></div>))}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeSection === 'notes' && (
-                    <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-6xl">
-                      <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Notes.</h1>
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div className="lg:col-span-1 space-y-6">
-                          <div className="bg-white p-8 rounded-[2rem] border border-neutral-100 shadow-sm space-y-6 sticky top-2">
-                            <h2 className="text-xs font-black uppercase tracking-widest text-neutral-400">New Insight</h2>
-                            <input type="text" placeholder="Theme" className="w-full bg-neutral-50 rounded-xl p-5 font-black outline-none border border-transparent focus:border-neutral-200" value={newNote.title} onChange={e => setNewNote({...newNote, title: e.target.value})} />
-                            <textarea placeholder="Observation..." className="w-full bg-neutral-50 rounded-xl p-5 font-bold h-48 outline-none resize-none border border-transparent focus:border-neutral-200" value={newNote.content} onChange={e => setNewNote({...newNote, content: e.target.value})} />
-                            <button onClick={addNote} className="w-full bg-black text-white rounded-xl py-5 font-black uppercase text-xs tracking-widest hover:bg-neutral-800 transition-all">Log Note</button>
-                          </div>
-                        </div>
-                        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {notes.map(note => (
-                            <div key={note.id} className="bg-white p-8 rounded-[1.5rem] border border-neutral-100 shadow-sm relative group hover:shadow-md transition-all">
-                              <div className="flex items-start justify-between mb-4"><h4 className="text-xl font-black text-black flex-1">{note.title}</h4><button onClick={() => deleteNote(note.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={18} /></button></div>
-                              <div className="text-neutral-600 font-medium text-sm lg:text-base mb-6 prose prose-sm line-clamp-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(note.content) }} />
-                              <span className="text-[9px] font-black text-neutral-200 uppercase tracking-widest absolute bottom-6 right-8">{note.date_label}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeSection === 'goals' && (
-                    <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-5xl mx-auto">
-                      <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Aspirations.</h1>
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div className="lg:col-span-1">
-                          <div className="bg-black p-8 rounded-[2.5rem] text-white shadow-2xl flex flex-col items-center justify-center text-center">
-                            <Trophy size={48} className="text-yellow-500 mb-4" />
-                            <h3 className="text-xl font-black mb-2 uppercase tracking-tighter">North Star</h3>
-                            <p className="text-[10px] text-white/50 uppercase tracking-widest leading-relaxed">Focus on the meaningful milestones that define your long-term path.</p>
-                          </div>
-                        </div>
-                        <div className="lg:col-span-2 space-y-6">
-                          <div className="relative flex items-center gap-2">
-                            <input type="text" value={newGoalText} onChange={(e) => setNewGoalText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addGoal()} placeholder="Define a high-level goal..." className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl py-6 pl-8 pr-16 text-sm font-black outline-none focus:border-black transition-all" />
-                            <button onClick={addGoal} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black text-white rounded-xl shadow-lg hover:bg-neutral-800 transition-all"><Plus size={20} /></button>
-                          </div>
-                          <div className="bg-white border border-neutral-100 rounded-[2.5rem] p-8 shadow-sm space-y-4">
-                            {goals.length === 0 && <p className="text-center text-neutral-300 text-[10px] font-black uppercase tracking-widest py-12 italic">No aspirations defined yet.</p>}
-                            {goals.map(goal => (
-                              <div key={goal.id} className="flex items-center justify-between group py-4 border-b border-neutral-50 last:border-0 transition-all">
-                                <div className="flex items-center gap-4 flex-1">
-                                  <ZenithCheckbox id={goal.id} label={goal.text} checked={goal.completed} onChange={() => toggleGoal(goal.id)} />
-                                </div>
-                                <button onClick={() => deleteGoal(goal.id)} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"><Trash2 size={18} /></button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeSection === 'feedback' && (
-                    <div className="space-y-8 lg:space-y-12 pt-4 animate-in max-w-xl">
-                      <div className="space-y-2">
-                        <h1 className="text-4xl lg:text-6xl font-black tracking-tighter">Voice.</h1>
-                        <p className="text-sm font-medium text-neutral-500 leading-relaxed italic">
-                          Contribute your insights or proposed shifts to refine Zenith’s environment for your daily pursuit of depth. <br/>
-                          <span className="text-black font-black uppercase tracking-widest mt-1 inline-block bg-neutral-100 px-2 py-0.5 rounded text-[10px] not-italic">We hear you.</span>
-                        </p>
-                      </div>
-                      <div className="bg-white p-10 rounded-[2.5rem] border border-neutral-100 shadow-sm space-y-8">
-                        {feedbackSent ? (
-                          <div className="text-center py-12 space-y-6"><div className="w-20 h-20 bg-emerald-50 rounded-full mx-auto flex items-center justify-center text-emerald-500"><CheckCircle size={40} /></div><h3 className="text-2xl font-black">Received.</h3><p className="text-neutral-400 text-sm">Your feedback helps refine the sanctuary.</p></div>
+                          ))
                         ) : (
-                          <div className="space-y-6">
-                            <input type="email" value={feedbackEmail} onChange={(e) => setFeedbackEmail(e.target.value)} placeholder="Relay Address" className="w-full bg-neutral-50 rounded-2xl py-5 px-8 font-bold outline-none border border-transparent focus:border-neutral-200" />
-                            <textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} placeholder="Your thoughts..." className="w-full bg-neutral-50 rounded-2xl p-8 font-bold min-h-[200px] outline-none resize-none border border-transparent focus:border-neutral-200" />
-                            <button onClick={async () => { 
-                              setIsSendingFeedback(true); 
-                              try {
-                                const res = await fetch("https://formspree.io/f/mkowedqd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: feedbackEmail, message: feedbackText }) });
-                                if (res.ok) setFeedbackSent(true);
-                              } catch (e) { console.error(e); } finally { setIsSendingFeedback(false); }
-                            }} disabled={!feedbackText.trim() || !feedbackEmail.trim()} className="w-full bg-black text-white rounded-2xl py-6 font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 hover:bg-neutral-800 transition-all disabled:opacity-20">{isSendingFeedback ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}Deliver</button>
+                          <div className="flex flex-col items-center justify-center py-20 text-neutral-200 font-black">
+                             <Feather size={48} className="mb-4 opacity-20" />
+                             <p className="text-xs font-black uppercase tracking-widest">No intentions logged</p>
                           </div>
                         )}
                       </div>
                     </div>
-                  )}
+                  </div>
+                </div>
+              </div>
+            )}
 
-                  {activeSection === 'about' && (
-                    <div className="space-y-16 lg:space-y-32 pt-12 animate-in fade-in duration-1000 max-w-5xl mx-auto">
-                      <div className="text-center space-y-8 relative">
-                        <div className="absolute inset-0 -z-10 flex items-center justify-center">
-                          <Brain size={400} className="text-neutral-50 opacity-[0.4] stroke-[0.5]" />
-                        </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.8em] text-neutral-300">Established MMXXIV</p>
-                        <h1 className="text-6xl lg:text-[7rem] font-black tracking-tighter leading-[0.85] text-neutral-900 uppercase">
-                          Minimalist<br/>Sanctuary.
-                        </h1>
-                        <p className="text-lg lg:text-2xl text-neutral-500 font-medium max-w-2xl mx-auto leading-relaxed">
-                          Zenith is built on the belief that depth is a competitive advantage. In an age of infinite distraction, the ability to focus is a superpower.
-                        </p>
+            {activeSection === 'notes' && (
+              <div className="space-y-8 lg:space-y-12 pt-4 animate-in fade-in max-w-6xl font-black">
+                <h1 className="text-4xl lg:text-7xl font-black tracking-tighter">Notes.</h1>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 font-black">
+                  <div className="lg:col-span-1 space-y-6 font-black">
+                    <div className="bg-white p-8 rounded-[2rem] border border-neutral-100 shadow-sm space-y-6 sticky top-2 font-black">
+                      <h2 className="text-xs font-black uppercase tracking-widest text-neutral-400">New Insight</h2>
+                      <input type="text" placeholder="Theme" className="w-full bg-neutral-50 rounded-xl p-5 font-black outline-none border-2 border-transparent focus:border-neutral-200" value={newNote.title} onChange={e => setNewNote({...newNote, title: e.target.value})} />
+                      <textarea placeholder="Observation..." className="w-full bg-neutral-50 rounded-xl p-5 font-black h-48 outline-none resize-none border-2 border-transparent focus:border-neutral-200 font-black" value={newNote.content} onChange={e => setNewNote({...newNote, content: e.target.value})} />
+                      <button onClick={async () => {
+                         if (!newNote.title && !newNote.content) return;
+                         const { data } = await supabase.from('notes').insert({ user_id: session.user.id, title: newNote.title || 'Untitled', content: newNote.content, date_label: 'Today' }).select().single();
+                         if (data) setNotes([data, ...notes]);
+                         setNewNote({ title: '', content: '' });
+                      }} className="w-full bg-black text-white rounded-xl py-5 font-black uppercase text-xs tracking-widest hover:bg-neutral-800 transition-all shadow-xl font-black">Log Note</button>
+                    </div>
+                  </div>
+                  <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 font-black">
+                    {notes.map(note => (
+                      <div key={note.id} className="bg-white p-8 rounded-[1.5rem] border border-neutral-100 shadow-sm relative group hover:shadow-md transition-all font-black">
+                        <div className="flex items-start justify-between mb-4 font-black"><h4 className="text-xl font-black text-black flex-1">{note.title}</h4><button onClick={async () => {
+                           setNotes(notes.filter(n => n.id !== note.id));
+                           await supabase.from('notes').delete().eq('id', note.id);
+                        }} className="p-2 text-neutral-300 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all active:scale-90 font-black"><Trash2 size={18} /></button></div>
+                        <div className="text-neutral-600 font-black text-sm lg:text-base mb-6 prose prose-sm line-clamp-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(note.content) }} />
+                        <span className="text-[9px] font-black text-neutral-200 uppercase tracking-widest absolute bottom-6 right-8">{note.date_label}</span>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <div className="p-10 bg-white border border-neutral-100 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-500 group">
-                          <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white mb-8 group-hover:scale-110 transition-transform shadow-lg shadow-black/10">
-                            <Feather size={28} />
-                          </div>
-                          <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">Dopamine Balance</h3>
-                          <p className="text-neutral-500 font-medium leading-relaxed">
-                            Low-stimulation UI reduces cognitive load. By removing vibrant distractions and infinite scrolls, we help you stay in the flow state longer.
-                          </p>
-                        </div>
-
-                        <div className="p-10 bg-white border border-neutral-100 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-500 group">
-                          <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center text-black mb-8 group-hover:scale-110 transition-transform">
-                            <Zap size={28} />
-                          </div>
-                          <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">Atomic Progress</h3>
-                          <p className="text-neutral-500 font-medium leading-relaxed">
-                            We don't track volume; we track value. Zenith focuses on Must-Do priorities, ensuring your daily momentum aligns with your life goals.
-                          </p>
-                        </div>
-
-                        <div className="p-10 bg-white border border-neutral-100 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-500 group">
-                          <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-8 group-hover:scale-110 transition-transform">
-                            <ShieldCheck size={28} />
-                          </div>
-                          <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">Cloud Sovereignty</h3>
-                          <p className="text-neutral-500 font-medium leading-relaxed">
-                            Your data belongs to you. Secured by Supabase and encrypted in the cloud, your sanctuary is available whenever and wherever you need it.
-                          </p>
-                        </div>
+            {activeSection === 'feedback' && (
+              <div className="space-y-8 lg:space-y-12 pt-4 animate-in max-w-xl mx-auto font-black">
+                <div className="space-y-2 text-center font-black">
+                  <h1 className="text-4xl lg:text-7xl font-black tracking-tighter">Voice.</h1>
+                  <p className="text-sm font-black text-neutral-500 leading-relaxed italic">
+                    Contribute your insights to refine Zenith's sanctuary.
+                  </p>
+                </div>
+                <div className="bg-white p-10 rounded-[2.5rem] border border-neutral-100 shadow-sm space-y-8 font-black">
+                  {feedbackSent ? (
+                    <div className="text-center py-12 space-y-6 font-black">
+                      <div className="w-20 h-20 bg-emerald-50 rounded-full mx-auto flex items-center justify-center text-emerald-500 font-black"><CheckCircle size={40} /></div>
+                      <h3 className="text-2xl font-black">Received.</h3>
+                      <p className="text-neutral-400 text-sm font-black">Your feedback helps refine the environment.</p>
+                      <button onClick={() => setFeedbackSent(false)} className="text-[10px] font-black uppercase tracking-widest text-black underline font-black">Send Another</button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6 font-black">
+                      <div className="space-y-1 font-black">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-300 ml-1">Relay Address</label>
+                        <input type="email" value={feedbackEmail} onChange={(e) => setFeedbackEmail(e.target.value)} placeholder="email@example.com" className="w-full bg-neutral-50 rounded-2xl py-5 px-8 font-black outline-none border-2 border-transparent focus:border-neutral-200 transition-all" />
                       </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
-                        <div className="space-y-8">
-                          <div className="space-y-4">
-                            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-400">The Technology of Silence</h2>
-                            <h3 className="text-4xl font-black tracking-tight leading-tight text-neutral-900">Built for the Deep Work Era.</h3>
-                          </div>
-                          <p className="text-neutral-600 leading-relaxed font-medium">
-                            The modern workplace is a battlefield of notifications. Zenith was designed as a shield. Utilizing the Pomodoro technique, task prioritization, and low-stim aesthetics, it transforms your device from a source of stress into a source of clarity.
-                          </p>
-                          <div className="flex gap-12 pt-4">
-                            <div>
-                              <p className="text-3xl font-black">25m</p>
-                              <p className="text-[9px] font-black uppercase tracking-widest text-neutral-300">Standard Focus</p>
-                            </div>
-                            <div>
-                              <p className="text-3xl font-black">100%</p>
-                              <p className="text-[9px] font-black uppercase tracking-widest text-neutral-300">Cloud Sync</p>
-                            </div>
-                            <div>
-                              <p className="text-3xl font-black">0</p>
-                              <p className="text-[9px] font-black uppercase tracking-widest text-neutral-300">Ads/Trackers</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="bg-neutral-900 rounded-[4rem] p-12 lg:p-20 text-white shadow-2xl relative overflow-hidden group">
-                           <div className="absolute -top-10 -right-10 opacity-10 rotate-12 group-hover:rotate-0 transition-transform duration-700">
-                             <Target size={300} />
-                           </div>
-                           <p className="text-2xl lg:text-4xl font-black italic leading-tight mb-8">
-                             "Focus is a matter of deciding what things you are not going to do."
-                           </p>
-                           <div className="flex items-center gap-4">
-                              <div className="w-12 h-0.5 bg-white/20"></div>
-                              <span className="text-[10px] uppercase font-black tracking-[0.3em] text-white/40">Steve Jobs</span>
-                           </div>
-                        </div>
+                      <div className="space-y-1 font-black">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-300 ml-1">Observations</label>
+                        <textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} placeholder="Your thoughts..." className="w-full bg-neutral-50 rounded-2xl p-8 font-black min-h-[200px] outline-none resize-none border-2 border-transparent focus:border-neutral-200 transition-all font-black" />
                       </div>
-
-                      <div className="p-12 lg:p-24 bg-white border border-neutral-100 rounded-[4rem] text-center space-y-8 shadow-sm">
-                        <Globe className="mx-auto text-neutral-200" size={60} />
-                        <h3 className="text-3xl font-black tracking-tighter uppercase">Global Sanctuary</h3>
-                        <p className="text-neutral-400 font-medium max-w-xl mx-auto leading-relaxed">
-                          Zenith is a living product. We are constantly refining the interface to be even more invisible, even more helpful, and even more focused on your long-term success.
-                        </p>
-                        <div className="flex justify-center gap-4 pt-4">
-                           <span className="px-4 py-2 bg-neutral-100 rounded-full text-[9px] font-black uppercase tracking-widest">Version 1.0.4</span>
-                           <span className="px-4 py-2 bg-neutral-100 rounded-full text-[9px] font-black uppercase tracking-widest">Supabase Cloud</span>
-                        </div>
-                      </div>
+                      <button 
+                        onClick={async () => { 
+                          setIsSendingFeedback(true); 
+                          try {
+                            const res = await fetch("https://formspree.io/f/mkowedqd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: feedbackEmail, message: feedbackText }) });
+                            if (res.ok) setFeedbackSent(true);
+                          } catch (e) { console.error(e); } finally { setIsSendingFeedback(false); }
+                        }} 
+                        disabled={!feedbackText.trim() || !feedbackEmail.trim() || isSendingFeedback} 
+                        className="w-full bg-black text-white rounded-2xl py-6 font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 hover:bg-neutral-800 transition-all disabled:opacity-20 shadow-lg font-black"
+                      >
+                        {isSendingFeedback ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />} Deliver Feedback
+                      </button>
                     </div>
                   )}
-                  
-                  <footer className="mt-20 text-center py-8 border-t border-neutral-50"><p className="text-neutral-400 font-black uppercase tracking-[0.5em] text-[10px]">made by BlizX • cloud-synced</p></footer>
                 </div>
-              </main>
-            </div>
+              </div>
+            )}
+
+            {activeSection === 'about' && (
+              <div className="space-y-16 lg:space-y-32 pt-12 animate-in fade-in duration-1000 max-w-5xl mx-auto font-black">
+                <div className="text-center space-y-8 relative font-black">
+                  <div className="absolute inset-0 -z-10 flex items-center justify-center font-black">
+                    <Brain size={400} className="text-neutral-50 opacity-[0.4] stroke-[0.5]" />
+                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.8em] text-neutral-300">Zenith Protocol</p>
+                  <h1 className="text-6xl lg:text-[7rem] font-black tracking-tighter leading-[0.85] text-neutral-900 uppercase">
+                    Intentional<br/>Sanctuary.
+                  </h1>
+                  <p className="text-lg lg:text-2xl text-neutral-500 font-black max-w-2xl mx-auto leading-relaxed italic">
+                    A deliberate counter-current to the noise of the digital age.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10 font-black">
+                  <div className="p-12 bg-white border border-neutral-100 rounded-[3.5rem] shadow-sm hover:shadow-xl transition-all duration-500 group font-black">
+                    <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white mb-8 group-hover:scale-110 transition-transform shadow-lg shadow-black/10 font-black">
+                      <Sunset size={28} />
+                    </div>
+                    <h3 className="text-3xl font-black mb-6 uppercase tracking-tighter">The Dopamine Reset</h3>
+                    <p className="text-neutral-500 font-black leading-relaxed text-base mb-4 font-black">
+                      Modern technology is designed to exploit your evolutionary dopamine system for engagement. Zenith is a tool for liberation.
+                    </p>
+                    <p className="text-neutral-400 font-black text-sm leading-relaxed font-black">
+                      By eliminating the high-saturation colors and jagged animations found in social feeds, we help your brain recalibrate its baseline stimulation. This enables you to find satisfaction in deep work and quiet reflection rather than temporary digital spikes.
+                    </p>
+                  </div>
+
+                  <div className="p-12 bg-white border border-neutral-100 rounded-[3.5rem] shadow-sm hover:shadow-xl transition-all duration-500 group font-black">
+                    <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center text-black mb-8 group-hover:scale-110 transition-transform font-black">
+                      <Anchor size={28} />
+                    </div>
+                    <h3 className="text-3xl font-black mb-6 uppercase tracking-tighter">Static Intentionality</h3>
+                    <p className="text-neutral-500 font-black leading-relaxed text-base mb-4 font-black">
+                      Planning is not just a logistical task; it is a sacred act of choosing your future. Zenith provides the frame for that choice.
+                    </p>
+                    <p className="text-neutral-400 font-black text-sm leading-relaxed font-black">
+                      Our multi-tier priority system forces a hierarchy of value. You cannot do everything, but you can do the most important thing. Zenith's grid-based interface encourages a calm, structured approach to your agenda, anchoring your day in reality rather than aspiration.
+                    </p>
+                  </div>
+
+                  <div className="p-12 bg-white border border-neutral-100 rounded-[3.5rem] shadow-sm hover:shadow-xl transition-all duration-500 group font-black">
+                    <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-8 group-hover:scale-110 transition-transform font-black">
+                      <Mountain size={28} />
+                    </div>
+                    <h3 className="text-3xl font-black mb-6 uppercase tracking-tighter">Sustainable Momentum</h3>
+                    <p className="text-neutral-500 font-black leading-relaxed text-base mb-4 font-black">
+                      Hyper-productivity is a myth that leads to burnout. True progress is a function of consistency over long horizons.
+                    </p>
+                    <p className="text-neutral-400 font-black text-sm leading-relaxed font-black">
+                      Zenith tracks your trajectory with a focus on "momentum" rather than "speed." Our visualizers show you the cumulative effect of your daily choices, providing a sense of accomplishment that is steady and resilient, not fleeting and volatile.
+                    </p>
+                  </div>
+
+                  <div className="p-12 bg-white border border-neutral-100 rounded-[3.5rem] shadow-sm hover:shadow-xl transition-all duration-500 group font-black">
+                    <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mb-8 group-hover:scale-110 transition-transform font-black">
+                      <Coffee size={28} />
+                    </div>
+                    <h3 className="text-3xl font-black mb-6 uppercase tracking-tighter">Pure Presence</h3>
+                    <p className="text-neutral-500 font-black leading-relaxed text-base mb-4 font-black">
+                      We believe the best version of this app is the one you spend the least amount of time in. It is a portal, not a destination.
+                    </p>
+                    <p className="text-neutral-400 font-black text-sm leading-relaxed font-black">
+                      Zenith is polished to be functionally invisible. Every interaction is optimized to get you back to the "real world" — to your work, your family, and your passions — as quickly as possible, but with a renewed sense of clarity and purpose.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 font-black">
+                   <div className="p-10 border border-neutral-100 rounded-[2.5rem] text-center space-y-4 font-black">
+                      <Compass className="mx-auto text-neutral-300" size={32} />
+                      <h4 className="text-xl font-black uppercase">Navigation</h4>
+                      <p className="text-xs text-neutral-400 font-black uppercase tracking-widest leading-relaxed">Direct your energy with surgical precision.</p>
+                   </div>
+                   <div className="p-10 border border-neutral-100 rounded-[2.5rem] text-center space-y-4 font-black">
+                      <Heart className="mx-auto text-neutral-300" size={32} />
+                      <h4 className="text-xl font-black uppercase">Wellness</h4>
+                      <p className="text-xs text-neutral-400 font-black uppercase tracking-widest leading-relaxed">Protect your mental resources at all costs.</p>
+                   </div>
+                   <div className="p-10 border border-neutral-100 rounded-[2.5rem] text-center space-y-4 font-black">
+                      <Moon className="mx-auto text-neutral-300" size={32} />
+                      <h4 className="text-xl font-black uppercase">Reflect</h4>
+                      <p className="text-xs text-neutral-400 font-black uppercase tracking-widest leading-relaxed">End every session with intentional silence.</p>
+                   </div>
+                </div>
+
+                <div className="bg-black p-16 lg:p-24 rounded-[4rem] text-center space-y-8 text-white shadow-2xl font-black">
+                  <h2 className="text-4xl lg:text-6xl font-black tracking-tighter uppercase leading-tight">
+                    Silence the world.<br/>Master the self.
+                  </h2>
+                  <div className="flex flex-col gap-4 font-black">
+                    <p className="text-white/40 font-black uppercase tracking-[0.4em] text-xs">The Zenith Philosophy • Established MMXXIV</p>
+                    <div className="w-12 h-px bg-white/20 mx-auto" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">Version 1.4.2 • Cloud Synced Identity</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <footer className="mt-20 text-center py-8 border-t border-neutral-50 font-black">
+              <p className="text-neutral-300 font-black uppercase tracking-[0.5em] text-[10px]">Zenith Sanctuary • MMXXIV</p>
+            </footer>
           </div>
-        )}
+        </main>
       </div>
-    </>
+    </div>
   );
 };
 
