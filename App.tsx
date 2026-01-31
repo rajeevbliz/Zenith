@@ -681,7 +681,7 @@ const App: React.FC = () => {
       sub_category: subCategory
     }).select().single();
     if (data) setPriorities([...priorities, data]);
-    setNewPriorityInputs({ ...newPriorityInputs, [`${category}-${subCategory}`]: '' });
+    setNewPriorityInputs({ ...newPriorityInputs, [`${activePriorityTab}-${subCategory}`]: '' });
     setPriorityAddingTo(null);
   };
 
@@ -723,7 +723,7 @@ const App: React.FC = () => {
       result.push({ day: d, date: dateStr });
     }
     return result;
-  }, [currentMonth]);
+  }, [currentMonth, tasks]);
 
   const changeMonth = (offset: number) => {
     const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1);
@@ -997,18 +997,30 @@ const App: React.FC = () => {
                           const hasReminders = dayTasks.some(t => t.remind);
                           const isToday = d.date === getTodayStr();
                           
+                          // Improved highlighting logic
+                          let highlightClass = 'text-neutral-900';
+                          if (isSelected) {
+                            highlightClass = 'bg-black text-white shadow-xl scale-110 z-10';
+                          } else if (hasReminders) {
+                            highlightClass = 'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-100/50 hover:bg-emerald-100';
+                          } else if (hasTasks) {
+                            highlightClass = 'bg-neutral-50 text-neutral-900 hover:bg-neutral-100';
+                          } else {
+                            highlightClass = 'hover:bg-neutral-50 text-neutral-900';
+                          }
+
                           return (
                             <button 
                               key={d.date}
                               onClick={() => setSelectedDate(d.date)}
-                              className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all aspect-square font-black ${isSelected ? 'bg-black text-white shadow-xl scale-110 z-10' : 'hover:bg-neutral-50 text-neutral-900'}`}
+                              className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all aspect-square font-black ${highlightClass}`}
                             >
                               <span className={`text-[11px] font-black ${isToday && !isSelected ? 'underline underline-offset-4 decoration-2 decoration-black/20' : ''}`}>{d.day}</span>
                               {hasTasks && (
                                 <div className="absolute bottom-1.5 flex flex-col items-center gap-0.5 w-full px-2">
-                                   {/* Updated reminder indicator to subtle accent bar */}
+                                   {/* Subtle indicator bars */}
                                    <div className={`h-1 rounded-full transition-all ${isSelected ? 'w-4 bg-white/80' : 'w-3 bg-neutral-900/10'}`} />
-                                   {hasReminders && <div className={`h-1 rounded-full w-2 ${isSelected ? 'bg-emerald-400' : 'bg-emerald-500/30'}`} />}
+                                   {hasReminders && <div className={`h-1 rounded-full w-2 ${isSelected ? 'bg-emerald-400' : 'bg-emerald-500/40'}`} />}
                                 </div>
                               )}
                             </button>
